@@ -9,7 +9,7 @@ import difflib
 from openai import OpenAI
 from common.appLogger import AppLogger
 from common.secrets_env import load_secrets_env_variables
-from tushar.common_tushar_funcs import load_resume_text, chat_with_resume_context
+from tushar.common_tushar_funcs import load_resume_text
 from tushar.one_drive_resume_handler import generate_resume_download_link
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse
@@ -186,10 +186,6 @@ async def chat(message: str = Form(...), username: str = Form(...)):
         elif "resume" in text or "cv" in text or "download" in text:
             link = generate_resume_download_link()
             response_text = f"Here is Tushar's resume: {link}\n \n LinkedIn: https://www.linkedin.com/in/tusharchowdhury1a996"
-        else:
-            response_text, ok = chat_with_resume_context(user_input=message, client=client, resume_text=RESUME_TEXT)
-            if not ok:
-                logger.error(response_text)
 
         # Save bot response
         db.add(ChatMessage(username=username, message=response_text, is_bot=True))
