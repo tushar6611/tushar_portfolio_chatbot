@@ -1,0 +1,5 @@
+openai>=1.40.0
+Office365-REST-Python-Client>=2.5.0
+python-dotenv>=1.0.0
+psycopg2-binary
+SQLAlchemy

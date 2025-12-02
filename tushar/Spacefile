@@ -1,0 +1,7 @@
+app = "tushar-portfolio-chatbot"
+
+[build]
+engine = "python3.10"
+
+[run]
+command = "uvicorn main:app --host 0.0.0.0 --port $PORT"

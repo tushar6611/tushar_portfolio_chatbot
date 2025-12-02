@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Welcome – Recruiters</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        /* MATRIX RAIN BACKGROUND */
+        canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            background: black;
+        }
+
+        /* Neon fade-in animation */
+        .fade-in { 
+            animation: fadeIn 0.7s ease-out forwards; 
+            opacity: 0; 
+            transform: translateY(10px);
+        }
+        @keyframes fadeIn { 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* Error */
+        .error-msg { 
+            color: #ff4d4d; 
+            font-size: 0.875rem; 
+            margin-top: 0.25rem; 
+            display: none; 
+        }
+
+        /* Neon glow */
+        .neon-border {
+            border: 1px solid rgba(0,255,0,0.5);
+            box-shadow: 0 0 20px rgba(0,255,0,0.3);
+        }
+    </style>
+</head>
+
+<body class="h-full flex items-center justify-center relative">
+
+    <!-- MATRIX CANVAS -->
+    <canvas id="matrix-bg"></canvas>
+
+    <div class="bg-black/60 backdrop-blur-xl p-10 rounded-3xl shadow-2xl text-center w-full max-w-md fade-in neon-border">
+        <h1 class="text-3xl font-bold text-green-400 mb-6 drop-shadow-lg">Welcome</h1>
+        <p class="text-green-300 mb-4">Enter your email/name to continue</p>
+
+        <form id="username-form" class="flex flex-col gap-2">
+
+            <input
+                type="text"
+                id="username-input"
+                placeholder="Your email/name..."
+                class="px-5 py-3 rounded-full bg-black/40 text-green-300 placeholder-green-600 focus:outline-none focus:ring-4 focus:ring-green-500/50 transition text-base neon-border"
+            />
+
+            <span id="error-msg" class="error-msg">Please enter a email/name to continue.</span>
+
+            <button
+                type="submit"
+                class="px-8 py-3 bg-green-600 hover:bg-green-700 rounded-full text-black font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg neon-border"
+            >
+                Continue
+            </button>
+
+            <span id="skip-btn" class="mt-2 text-green-400 hover:underline cursor-pointer">
+                Skip (Not recommended)
+            </span>
+        </form>
+    </div>
+
+    <script>
+        /* MATRIX RAIN SCRIPT */
+        const canvas = document.getElementById("matrix-bg");
+        const ctx = canvas.getContext("2d");
+
+        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth;
+
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&";
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#00FF00";
+            ctx.font = fontSize + "px monospace";
+
+            drops.forEach((y, i) => {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, y * fontSize);
+
+                if (y * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            });
+        }
+
+        setInterval(drawMatrix, 50);
+
+        /* Your Existing Form Logic */
+        const form = document.getElementById("username-form");
+        const input = document.getElementById("username-input");
+        const skipBtn = document.getElementById("skip-btn");
+        const errorMsg = document.getElementById("error-msg");
+
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const username = input.value.trim();
+            if (!username) {
+                errorMsg.style.display = "block";
+                return;
+            }
+            sessionStorage.setItem("username", username);
+            window.location.href = "/chatpage";
+        });
+
+        input.addEventListener("input", () => {
+            errorMsg.style.display = "none";
+        });
+
+        skipBtn.addEventListener("click", () => {
+            sessionStorage.setItem("username", "there");
+            window.location.href = "/chatpage";
+        });
+    </script>
+
+</body>
+</html>
