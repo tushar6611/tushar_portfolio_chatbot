@@ -23,7 +23,7 @@ init_db()
 # FastAPI setup
 # -------------------
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="static", html=True), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # -------------------
@@ -48,6 +48,7 @@ RESUME_TEXT = load_resume_text()
 # Predefined answers
 # -------------------
 PREDEFINED_ANSWERS = {
+    "how are you": "I'm just a program, but thanks for asking! How can I assist you with Tushar's profile today?",
     "hi": "Hi! I'm Tushar’s AI assistant. Ask about his skills, experience, projects, or type 'resume' to download his CV.",
     "tell me about tushar": "Tushar is a Full-Stack Developer & AI Engineer with strong experience in .NET, Python, Azure, and Multitenant systems.",
     "show me his skills": "Tushar's key skills:\n- Python, .NET Core, Node.js\n- Azure, Kubernetes, DevOps CI/CD\n- Next.js, React\n- Machine Learning & LLM Integrations\n- Multitenant Architecture\n- Microservices\n- SQL \n- Next Js \n- Jenkins\n- Docker\n- AI/ML Pipelines\n - Azure DevOps \n- Elasticsearch",
@@ -181,12 +182,12 @@ async def chat(message: str = Form(...), username: str = Form(...)):
 
         # Predefined answers
         best_match = difflib.get_close_matches(text, PREDEFINED_ANSWERS.keys(), n=1, cutoff=0.5)
-        if best_match:
-            response_text = PREDEFINED_ANSWERS[best_match[0]]
-        elif "resume" in text or "cv" in text or "download" in text:
+        if "resume" in text or "cv" in text or "download" in text:
             link = generate_resume_download_link()
             response_text = f"Here is Tushar's resume: {link}\n \n LinkedIn: https://www.linkedin.com/in/tusharchowdhury1a996"
-
+        elif best_match:
+            response_text = PREDEFINED_ANSWERS[best_match[0]]
+        
         # Save bot response
         db.add(ChatMessage(username=username, message=response_text, is_bot=True))
         db.commit()
