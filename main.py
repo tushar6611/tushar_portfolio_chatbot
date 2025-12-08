@@ -145,6 +145,10 @@ PREDEFINED_ANSWERS = {
 # -------------------
 # Routes
 # -------------------
+
+@app.get("/", response_class=HTMLResponse)
+@app.get("/lander", response_class=HTMLResponse)
+@app.get("/chatpage", response_class=HTMLResponse)
 @app.post("/save-username")
 async def save_username(request: Request, username: str = Form(...)):
     db = SessionLocal()
@@ -160,11 +164,6 @@ async def save_username(request: Request, username: str = Form(...)):
         return {"success": True, "chat_history": chat_history}
     finally:
         db.close()
-
-@app.get("/", response_class=HTMLResponse)
-def username_page(request: Request):
-    # Landing page with username form
-    return templates.TemplateResponse("username.html", {"request": request})
 
 @app.get("/chatpage", response_class=HTMLResponse)
 def home(request: Request):
