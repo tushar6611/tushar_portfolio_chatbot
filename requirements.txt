@@ -7,3 +7,7 @@ fastapi
 uvicorn[standard]
 jinja2
 python-multipart
+python-multipart PyPDF2
+fastapi uvicorn python-multipart pdfplumber sentence-transformers spacy
+python -m spacy download en_core_web_sm
+

@@ -17,11 +17,20 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from common.db import SessionLocal, init_db, ChatUser, ChatMessage
 import os
+from fastapi import UploadFile, File
+import PyPDF2
+import io
+import json
+from fastapi import APIRouter, UploadFile, File, Form
+import pdfplumber
+import re
+import spacy
+from sentence_transformers import SentenceTransformer, util
 
 init_db()
-# -------------------
-# FastAPI setup
-# -------------------
+nlp = spacy.load("en_core_web_sm")
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static", html=True), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -199,3 +208,114 @@ async def chat(message: str = Form(...), username: str = Form(...)):
         return {"response": response_text}
     finally:
         db.close()
+
+def extract_text_from_pdf(file_bytes):
+    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+        text = ""
+        for page in pdf.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text += extracted + "\n"
+    return text
+
+
+def clean_words(text):
+    return re.findall(r"\b[a-zA-Z0-9+#.]+\b", text.lower())
+
+
+def extract_skills(text):
+    doc = nlp(text)
+    print("Extracting skills from text...",doc)
+    skills = [token.text.lower() for token in doc if token.pos_ in ["NOUN", "PROPN"]]
+    print("Raw skills extracted:", skills)
+    return list(set(skills))
+
+
+# ------------------------------
+# Scoring Algorithms
+# ------------------------------
+
+def keyword_score(resume_text, jd_text):
+    resume_words = set(clean_words(resume_text))
+    jd_words = clean_words(jd_text)
+
+    matches = [w for w in jd_words if w in resume_words]
+    missing = list(set(jd_words) - resume_words)
+
+    score = (len(matches) / len(jd_words)) * 100 if jd_words else 0
+    return round(score, 2), missing
+
+
+def semantic_score(resume_text, jd_text):
+    try:
+        emb_resume = model.encode(resume_text[:2000], convert_to_tensor=True)
+        emb_jd = model.encode(jd_text[:2000], convert_to_tensor=True)
+
+        similarity = util.cos_sim(emb_resume, emb_jd).item()
+        return round(similarity * 100, 2)
+    except Exception as e:
+        print("Semantic error:", e)
+        return 50.0
+
+
+def skill_score(resume_text, jd_text):
+    resume_skills = extract_skills(resume_text)
+    jd_skills = extract_skills(jd_text)
+
+    matches = [s for s in jd_skills if s in resume_skills]
+    missing = list(set(jd_skills) - set(resume_skills))
+
+    if len(jd_skills) == 0:
+        return 0, [], []
+
+    score = len(matches) / len(jd_skills) * 100
+    return round(score, 2), matches, missing
+
+
+def experience_score(resume_text, jd_text):
+    resume_years = re.findall(r"(\d+)\+?\s*years", resume_text.lower())
+    jd_years = re.findall(r"(\d+)\+?\s*years", jd_text.lower())
+
+    if not resume_years or not jd_years:
+        return 50  # neutral score
+
+    resume_exp = max(map(int, resume_years))
+    required_exp = max(map(int, jd_years))
+
+    score = min(100, (resume_exp / required_exp) * 100)
+    return round(score, 2)
+
+@app.post("/resume-score")
+async def resume_score_api(
+    resume: UploadFile = File(...),
+    job_description: str = Form(...)
+):
+    # Extract text from uploaded PDF
+    resume_bytes = await resume.read()
+    resume_text = extract_text_from_pdf(resume_bytes)
+
+    # Compute all scores
+    k_score, missing_keywords = keyword_score(resume_text, job_description)
+    s_score = semantic_score(resume_text, job_description)
+    skillscore, matched_skills, missing_skills = skill_score(resume_text, job_description)
+    exp_score = experience_score(resume_text, job_description)
+
+    # Weighted score
+    final_score = round(
+        k_score * 0.30 +
+        s_score * 0.40 +
+        skillscore * 0.20 +
+        exp_score * 0.10,
+        2
+    )
+
+    return {
+        "final_score": final_score,
+        "keyword_score": k_score,
+        "semantic_score": s_score,
+        "skill_match_score": skillscore,
+        "experience_score": exp_score,
+        "matched_skills": matched_skills,
+        "missing_skills": missing_skills[:20],
+        "missing_keywords": missing_keywords[:20]
+    }
