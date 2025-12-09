@@ -28,6 +28,11 @@
         .scrollbar-thin::-webkit-scrollbar-thumb {
             background: rgba(255,255,255,0.2); border-radius: 4px;
         }
+        #scoreResult {
+        max-height: 250px;
+        overflow-y: auto;
+    }
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -92,7 +97,15 @@
     <!-- Resume Score Modal -->
   <div id="scoreModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[999]">
     <div class="bg-white/10 backdrop-blur-xl p-6 rounded-2xl w-full max-w-lg border border-white/20 shadow-xl">
-        <h2 class="text-xl font-bold text-white mb-4">Resume Match Score</h2>
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-bold text-white">Resume Match Score</h2>
+
+    <!-- Blue Refresh Button -->
+    <button id="refreshBtn"
+        class="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition flex items-center justify-center">
+        ⟳
+    </button>
+</div>
 
         <label class="text-white text-sm">Upload Resume (PDF)</label>
         <input id="resumeFile" type="file" accept="application/pdf"
@@ -106,6 +119,7 @@
             class="w-full mt-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold text-white">
             Analyze Score
         </button>
+        
 
         <!-- Score Result -->
         <div id="scoreResult" class="hidden mt-6 p-4 bg-white/20 rounded-xl text-white">
@@ -185,20 +199,11 @@ analyzeBtn.onclick = async () => {
     const resumeFile = document.getElementById("resumeFile").files[0];
     const jd = document.getElementById("jobDescription").value.trim();
 
-    if (!resumeFile) { alert("Please upload your resume PDF!"); return; }
-    if (!jd) { alert("Please paste the Job Description!"); return; }
+    if (!resumeFile || !jd) {
+        alert("Please upload resume and paste job description.");
+        return;
+    }
 
-    // Reset UI
-    scoreResult.classList.add("hidden");
-    scoreValue.innerText = "--%";
-    strengthList.innerHTML = "";
-    weaknessList.innerHTML = "";
-    suggestionList.innerHTML = "";
-
-    analyzeBtn.innerText = "Analyzing...";
-    analyzeBtn.disabled = true;
-
-    // Prepare form data
     const formData = new FormData();
     formData.append("resume", resumeFile);
     formData.append("job_description", jd);
@@ -209,33 +214,66 @@ analyzeBtn.onclick = async () => {
             body: formData
         });
 
-        const result = await response.json();
-
-        if (result.error) {
-            alert(result.error);
-        } else {
-            scoreValue.innerText = result.score ?? "--";
-
-            (result.strengths || []).forEach(s => {
-                strengthList.innerHTML += `<li>${s}</li>`;
-            });
-            (result.missing_skills || []).forEach(w => {
-                weaknessList.innerHTML += `<li>${w}</li>`;
-            });
-            (result.suggestions || []).forEach(s => {
-                suggestionList.innerHTML += `<li>${s}</li>`;
-            });
-
-            scoreResult.classList.remove("hidden");
+        if (!response.ok) {
+            const text = await response.text();
+            console.error("Server error:", text);
+            alert("Server error: " + text);
+            return;
         }
-    } catch (err) {
-        console.error(err);
-        alert("Failed to fetch resume score. Check backend.");
-    } finally {
-        analyzeBtn.innerText = "Analyze Score";
-        analyzeBtn.disabled = false;
+
+        const data = await response.json();
+
+        // Show score
+        scoreResult.classList.remove("hidden");
+        scoreValue.innerText = data.final_score + "%";
+
+        // Clear old lists
+        strengthList.innerHTML = "";
+        weaknessList.innerHTML = "";
+        suggestionList.innerHTML = "";
+
+        // Add strengths
+        data.matched_skills.forEach(skill => {
+            const li = document.createElement("li");
+            li.textContent = skill;
+            strengthList.appendChild(li);
+        });
+
+        // Add missing skills
+        data.missing_skills.forEach(skill => {
+            const li = document.createElement("li");
+            li.textContent = skill;
+            weaknessList.appendChild(li);
+        });
+
+        // Add suggestions (based on missing keywords)
+        data.missing_keywords.forEach(kw => {
+            const li = document.createElement("li");
+            li.textContent = "Add keyword: " + kw;
+            suggestionList.appendChild(li);
+        });
+
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Something went wrong");
     }
 };
+const refreshBtn = document.getElementById("refreshBtn");
+
+refreshBtn.onclick = () => {
+    // clear only JD
+    document.getElementById("jobDescription").value = "";
+
+    // hide score section
+    scoreResult.classList.add("hidden");
+
+    // reset values
+    scoreValue.innerText = "--%";
+    strengthList.innerHTML = "";
+    weaknessList.innerHTML = "";
+    suggestionList.innerHTML = "";
+};
+
 </script>
 
     <!-- Chat Logic -->
