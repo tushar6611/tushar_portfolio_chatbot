@@ -1,200 +1,132 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Welcome – Recruiters</title>
+{% extends "layout/base.html" %}
 
-    <!-- Icons -->
-    <link rel="icon" href="../static/icons/favicon.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" sizes="180x180" href="../static/icons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="../static/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../static/icons/favicon-16x16.png">
-    <link rel="manifest" href="../static/site.webmanifest">
-    <meta name="theme-color" content="#000000">
+{% block title %}Welcome – Tushar.dev(){% endblock %}
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+{% block extra_head %}
+<style>
+    :root {
+        --py-yellow: #FFD43B;
+        --card-bg: rgba(22, 27, 34, 0.88);
+        --border: #30363d;
+    }
 
-    <style>
-        body { font-family: 'Inter', sans-serif; overflow: hidden; }
-        .bg-cinema {
-            background: linear-gradient(135deg, #0f0f0f 0%, #1a0d1a 50%, #0d0a1a 100%);
-            background-size: 200% 200%;
-            animation: gradientShift 25s ease infinite;
-        }
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        .card-glass {
-            background: rgba(20, 20, 20, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .glow-red { box-shadow: 0 0 40px rgba(229, 9, 20, 0.5); }
-        .netflix-red { background-color: #E50914; color: white; }
-        .error-msg { color: #ff4444; font-size: 0.875rem; margin-top: 0.5rem; display: none; }
+    .card-glass {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: 1.5rem;
+    }
 
-        /* Particles */
-        #particles-canvas {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-        .custom-cursor {
-            position: fixed;
-            width: 24px; height: 24px;
-            border: 2px solid rgba(229, 9, 20, 0.7);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transform: translate(-50%, -50%);
-            transition: transform 0.15s ease;
-        }
-    </style>
-</head>
-<body class="h-full bg-cinema flex items-center justify-center relative">
+    .glow-py {
+        box-shadow: 0 0 40px rgba(255, 212, 59, 0.5);
+    }
 
-    <!-- HBO Max Interactive Particles -->
-    <canvas id="particles-canvas"></canvas>
-    <div class="custom-cursor" id="cursor"></div>
+    .btn-python {
+        @apply w-full py-5 bg-gradient-to-r from-yellow-500 to-amber-600 
+               hover:from-yellow-400 hover:to-amber-500 text-black font-bold 
+               rounded-full border border-yellow-400/50 transform hover:scale-105 
+               active:scale-95 shadow-2xl glow-py transition-all duration-300 text-xl;
+    }
 
-    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80 pointer-events-none"></div>
+    /* EXACT SAME INPUT STYLE AS CHAT PAGE – WIDE, WHITE TEXT */
+    .input-username {
+        width: 100%;
+        padding: 1rem 1.5rem;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 212, 59, 0.3);
+        color: white !important;
+        font-size: 1.1rem;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+    .input-username::placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+    .input-username:focus {
+        border-color: #FFD43B;
+        background: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 0 0 4px rgba(255, 212, 59, 0.2);
+    }
 
-    <div class="relative z-10 card-glass p-12 rounded-3xl shadow-2xl text-center w-full max-w-md glow-red">
+    .error-msg {
+        color: #ff6b6b;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        display: none;
+    }
+
+    .skip-text {
+        @apply text-yellow-400/80 hover:text-yellow-300 underline text-sm transition;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen relative z-10 px-4">
+
+    <div class="relative z-10 card-glass p-12 rounded-3xl shadow-2xl text-center w-full max-w-md glow-py">
+        
         <h1 class="text-6xl font-black text-white mb-4 tracking-tight">
-            Welcome<span class="text-red-500">.</span>
+            >>> <span style="color:#FFD43B;">Welcome</span><span style="color:#FFD43B;">.</span>
         </h1>
-        <p class="text-gray-300 text-lg mb-10">Enter your name or email to continue</p>
+        <p class="text-gray-400 text-lg mb-10 font-light">
+            Enter your name or email to continue
+        </p>
 
         <form id="username-form" class="space-y-6">
-            <input
-                type="text"
-                id="username-input"
-                placeholder="Your name or email..."
-                class="w-full px-6 py-5 rounded-full bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/30 transition text-lg"
-                autocomplete="off"
-            />
-            <span id="error-msg" class="error-msg block">Please enter a name/email to continue.</span>
+            <div>
+                <input
+                    type="text"
+                    id="username-input"
+                    placeholder="you@example.com or John"
+                    class="input-username"
+                    autocomplete="off"
+                />
+                <span id="error-msg" class="error-msg block">
+                    Please enter a name/email to continue.
+                </span>
+            </div>
 
-            <button type="submit"
-                class="w-full py-5 netflix-red hover:bg-red-600 font-bold rounded-full text-xl transition transform hover:scale-105 active:scale-95 shadow-xl glow-red">
+            <button type="submit" class="btn-python">
                 Continue
             </button>
 
-            <button type="button" id="skip-btn"
-                class="text-gray-400 hover:text-white text-sm underline transition">
+            <button type="button" id="skip-btn" class="skip-text mt-4 block w-full">
                 Skip (Not recommended)
             </button>
         </form>
     </div>
+</div>
+{% endblock %}
 
-    <!-- Particles + Cursor Script -->
-    <script>
-        const canvas = document.getElementById('particles-canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        const mouse = { x: 0, y: 0 };
-        const cursor = document.getElementById('cursor');
+{% block extra_scripts %}
+<script>
+    const form = document.getElementById("username-form");
+    const input = document.getElementById("username-input");
+    const errorMsg = document.getElementById("error-msg");
+    const skipBtn = document.getElementById("skip-btn");
 
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resize();
-        window.addEventListener('resize', resize);
+    form.addEventListener("submit", e => {
+        e.preventDefault();
+        const val = input.value.trim();
 
-        window.addEventListener('mousemove', e => {
-            mouse.x = e.clientX;
-            mouse.y = e.clientY;
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-        });
-
-        class Particle {
-            constructor() {
-                this.reset();
-            }
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 3 + 1;
-                this.speedX = Math.random() * 0.6 - 0.3;
-                this.speedY = Math.random() * 0.6 - 0.3;
-                this.opacity = 0.3;
-            }
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-
-                const dx = mouse.x - this.x;
-                const dy = mouse.y - this.y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < 160) {
-                    const force = 160 / (dist * dist);
-                    this.speedX += dx * force * 0.0006;
-                    this.speedY += dy * force * 0.0006;
-                    this.opacity = Math.min(0.9, this.opacity + 0.02);
-                } else {
-                    this.opacity = Math.max(0.2, this.opacity - 0.005);
-                }
-
-                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-            }
-            draw() {
-                ctx.fillStyle = `rgba(229, 50, 60, ${this.opacity})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = `rgba(255, 120, 130, ${this.opacity * 0.4})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
-                ctx.fill();
-            }
+        if (!val) {
+            errorMsg.style.display = "block";
+            return;
         }
 
-        function initParticles() {
-            particles = [];
-            const count = Math.min(90, window.innerWidth / 14);
-            for (let i = 0; i < count; i++) particles.push(new Particle());
-        }
-        initParticles();
+        sessionStorage.setItem("username", val);
+        window.location.href = "/home";
+    });
 
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => { p.update(); p.draw(); });
-            requestAnimationFrame(animate);
-        }
-        animate();
+    input.addEventListener("input", () => {
+        errorMsg.style.display = "none";
+    });
 
-        window.addEventListener('resize', () => { resize(); initParticles(); });
-
-        // Form Logic
-        const form = document.getElementById("username-form");
-        const input = document.getElementById("username-input");
-        const errorMsg = document.getElementById("error-msg");
-        const skipBtn = document.getElementById("skip-btn");
-
-        form.addEventListener("submit", e => {
-            e.preventDefault();
-            const val = input.value.trim();
-            if (!val) {
-                errorMsg.style.display = "block";
-                return;
-            }
-            sessionStorage.setItem("username", val);
-            window.location.href = "/chatpage";
-        });
-
-        input.addEventListener("input", () => errorMsg.style.display = "none");
-        skipBtn.addEventListener("click", () => {
-            sessionStorage.setItem("username", "there");
-            window.location.href = "/chatpage";
-        });
-    </script>
-</body>
-</html>
+    skipBtn.addEventListener("click", () => {
+        sessionStorage.setItem("username", "there");
+        window.location.href = "/home";
+    });
+</script>
+{% endblock %}

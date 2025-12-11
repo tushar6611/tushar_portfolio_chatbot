@@ -230,11 +230,13 @@ def sse_event(progress: int, message: str):
 # HTML
 # -------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    with open("templates/username.html") as f:
-        html = f.read()
-    return Template(html).render()
+async def welcome_page(request: Request):
+    """Welcome / Username screen"""
+    return templates.TemplateResponse("username.html", {"request": request})
 
+@app.get("/home", response_class=HTMLResponse)
+async def home_page(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
 
 def clean_words(text):
     return re.findall(r"\b[a-zA-Z0-9+#.]+\b", text.lower())
@@ -331,13 +333,11 @@ def experience_score(resume_text, jd_text):
 # ROUTES
 # --------------------------------------------------------------------
 
-@app.get("/", response_class=HTMLResponse)
-def username_page(request: Request):
-    return templates.TemplateResponse("username.html", {"request": request})
 
 
 @app.get("/chatpage", response_class=HTMLResponse)
-def chat_page(request: Request):
+async def chat_page(request: Request):
+    """Main AI Chat page"""
     return templates.TemplateResponse("index.html", {"request": request})
 
 

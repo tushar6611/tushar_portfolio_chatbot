@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Tushar - AI Engineer & Full-Stack Developer{% endblock %}</title>
+
+    <link rel="icon" href="/static/icons/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/apple-touch-icon.png">
+    <link rel="manifest" href="/static/site.webmanifest">
+    <meta name="theme-color" content="#000000">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --py-yellow: #FFD43B;
+            --bg-dark: #0d1117;
+            --card-bg: rgba(22, 27, 34, 0.85);
+            --border: #30363d;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; overflow-x: hidden;
+            background: linear-gradient(rgba(13,17,23,0.85), rgba(13,17,23,0.95)), 
+                        url('https://images.unsplash.com/photo-1515879218367-8466d910aaa4?ixlib=rb-4.0.3&auto=format&fit=crop&q=80') center/cover no-repeat fixed;
+            color: #c9d1d9;
+            cursor: default !important;
+        }
+
+        .custom-cursor { display: none !important; }
+
+        .glow-py { box-shadow: 0 0 40px rgba(255, 212, 59, 0.6); }
+
+        .nav-link {
+            @apply relative text-gray-400 hover:text-white font-medium transition-all duration-300;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+        }
+        .nav-link.active {
+            @apply text-white font-bold;
+        }
+        .nav-link.active::after {
+            content: '';
+            @apply absolute inset-x-6 bottom-2 h-1 bg-yellow-500 rounded-full;
+        }
+
+        #particles-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 1;
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen text-white relative">
+
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- HEADER -->
+    <header class="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl bg-black/90 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center">
+            <a href="/" class="flex items-center space-x-4 group">
+                <div class="w-11 h-11 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-xl flex items-center justify-center glow-py shadow-2xl">
+                    <span class="text-black font-black text-2xl">T</span>
+                </div>
+                <span class="text-2xl font-black tracking-tight">
+                    Tushar<span class="text-yellow-400">.</span>
+                </span>
+            </a>
+
+            <nav class="hidden md:flex items-center space-x-8 ml-20">
+                <a href="/home" class="nav-link" data-section="home">Home</a>
+                <a href="/#skills" class="nav-link" data-section="skills">Skills</a>
+                <!-- <a href="/#projects" class="nav-link" data-section="projects">Projects</a>
+                <a href="/#experience" class="nav-link" data-section="experience">Experience</a>
+                <a href="/#contact" class="nav-link" data-section="contact">Contact</a> -->
+            </nav>
+
+            <div class="ml-auto">
+                <a href="/chatpage"
+                   class="inline-block px-8 py-3.5 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-bold rounded-full border border-yellow-400/50 transform hover:scale-105 active:scale-95 shadow-2xl glow-py transition-all duration-300 tracking-wide">
+                    Chat with Me
+                </a>
+            </div>
+
+            <button id="mobile-menu-btn" class="md:hidden ml-auto text-white">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden bg-black/95 backdrop-blur-2xl border-t border-white/10">
+            <div class="px-8 py-6 space-y-4">
+                <a href="/home" class="block py-3 text-gray-300 hover:text-white text-lg">Home</a>
+                <a href="/#skills" class="block py-3 text-gray-300 hover:text-white text-lg">Skills</a>
+                <!-- <a href="/#projects" class="block py-3 text-gray-300 hover:text-white text-lg">Projects</a>
+                <a href="/#experience" class="block py-3 text-gray-300 hover:text-white text-lg">Experience</a>
+                <a href="/#contact" class="block py-3 text-gray-300 hover:text-white text-lg">Contact</a> -->
+                <a href="/chatpage" class="block py-4 text-center bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-xl">Chat with Me</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="relative z-10 pt-24">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- PARTICLES + FINAL NAVIGATION FIX (WORKS FROM ANY PAGE) -->
+    <script>
+        // Particles
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const mouse = { x: 0, y: 0 };
+
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        resize();
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 0.6 - 0.3;
+                this.speedY = Math.random() * 0.6 - 0.3;
+                this.opacity = 0.3;
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                const dx = mouse.x - this.x; const dy = mouse.y - this.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist < 160) {
+                    const force = 160 / (dist * dist);
+                    this.speedX += dx * force * 0.0006;
+                    this.speedY += dy * force * 0.0006;
+                    this.opacity = Math.min(0.9, this.opacity + 0.02);
+                } else this.opacity = Math.max(0.2, this.opacity - 0.005);
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+            draw() {
+                ctx.fillStyle = `rgba(255, 212, 59, ${this.opacity})`;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const count = Math.min(100, window.innerWidth / 12);
+            for (let i = 0; i < count; i++) particles.push(new Particle());
+        }
+        initParticles();
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+        animate();
+        window.addEventListener('resize', () => { resize(); initParticles(); });
+
+        // Mobile Menu
+        document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // FINAL WORKING: Click from ANY page → go to /home + scroll + highlight
+        document.addEventListener("DOMContentLoaded", () => {
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const href = link.getAttribute('href');
+
+                    // If link contains # (Skills, Projects, etc.)
+                    if (href.includes('#') && href !== '/#') {
+                        e.preventDefault();
+                        const hash = href.split('#')[1];
+                        if (hash) {
+                            // Always go to /home with the hash
+                            window.location.href = `/home#${hash}`;
+                        }
+                    }
+                });
+            });
+
+            // Only activate scroll/highlight when on /home
+            if (window.location.pathname === '/home' || window.location.pathname === '/home/') {
+                const sections = document.querySelectorAll('section[id]');
+
+                // Smooth scroll + highlight when clicking on /home
+                navLinks.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        if (link.getAttribute('href').includes('#')) {
+                            e.preventDefault();
+                            const targetId = link.getAttribute('href').split('#')[1];
+                            const target = document.getElementById(targetId);
+                            if (target) {
+                                target.scrollIntoView({ behavior: 'smooth' });
+                                navLinks.forEach(l => l.classList.remove('active'));
+                                link.classList.add('active');
+                            }
+                        }
+                    });
+                });
+
+                // Highlight on scroll
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const id = entry.target.getAttribute('id');
+                            navLinks.forEach(link => {
+                                link.classList.remove('active');
+                                if (link.getAttribute('href').endsWith(`#${id}`)) {
+                                    link.classList.add('active');
+                                }
+                            });
+                        }
+                    });
+                }, { threshold: 0.6, rootMargin: '-120px 0px -40% 0px' });
+
+                sections.forEach(section => observer.observe(section));
+
+                // On load with hash (e.g. /home#skills)
+                if (window.location.hash) {
+                    const hash = window.location.hash.substring(1);
+                    const target = document.getElementById(hash);
+                    const activeLink = Array.from(navLinks).find(l => l.getAttribute('href').endsWith(`#${hash}`));
+                    if (activeLink) {
+                        navLinks.forEach(l => l.classList.remove('active'));
+                        activeLink.classList.add('active');
+                    }
+                    if (target) {
+                        setTimeout(() => target.scrollIntoView({ behavior: 'smooth' }), 200);
+                    }
+                }
+            }
+        });
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

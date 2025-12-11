@@ -1,0 +1,219 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Tushar Chowdhury – AI Engineer & Full-Stack Developer{% endblock %}
+
+{% block extra_head %}
+<style>
+    .glass-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+    }
+
+    .glow-py {
+        box-shadow: 0 0 30px rgba(255, 212, 59, 0.5);
+    }
+
+    .btn-python {
+        @apply px-8 py-4 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-lg 
+               border border-yellow-400/50 hover:from-yellow-400 hover:to-amber-500 
+               transform hover:scale-105 active:scale-95 shadow-xl glow-py 
+               transition-all duration-300;
+    }
+
+    .section-title {
+        @apply text-4xl md:text-5xl font-black tracking-tight mb-4;
+        background: linear-gradient(90deg, #FFD43B, #FF8C00);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .card-hover {
+        transition: all 0.4s ease;
+    }
+    .card-hover:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(255, 212, 59, 0.25);
+    }
+
+    .icon-py { color: var(--py-yellow); }
+    .badge-py {
+        @apply inline-block px-4 py-1 bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 rounded-full text-sm font-medium;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-br from-black/90 via-[#0d1117]/80 to-transparent"></div>
+    
+    <div class="relative z-10 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <!-- Left: Profile Card -->
+        <div class="glass-card p-10 glow-py card-hover">
+            <div class="flex items-center space-x-6 mb-8">
+                <div class="w-28 h-28 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-2xl flex items-center justify-center glow-py shadow-2xl">
+                    <span class="text-6xl font-black text-black">T</span>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-black">Tushar Chowdhury</h2>
+                    <p class="text-yellow-400 text-lg font-bold flex items-center gap-2">
+                        <span>Senior AI Engineer</span>
+                        <span class="badge-py">Full-Stack + ML</span>
+                    </p>
+                    <p class="text-var(--text-muted) mt-1">Bengaluru, India</p>
+                </div>
+            </div>
+
+            <div class="space-y-4 font-mono text-sm">
+                <div class="flex items-center space-x-4">
+                    <svg class="w-5 h-5 icon-py" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/></svg>
+                    <span>+91 8840872713</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <svg class="w-5 h-5 icon-py" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 10l-.503.504a1 1 0 00.707 1.707l6.293-6.293a1 1 0 00-1.414-1.414L10 10.586 3.707 4.293a1 1 0 00-1.414 1.414l6.293 6.293a1 1 0 001.414 0l6.293-6.293a1 1 0 00-1.414-1.414L10 10.586l-6.293-6.293a1 1 0 00-1.414 1.414z"/></svg>
+                    <span>tusharchowdhury6611@gmail.com</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <svg class="w-5 h-5 icon-py" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+                    <span>Bengaluru, Karnataka, India</span>
+                </div>
+            </div>
+
+            <div class="mt-8 flex flex-wrap gap-4">
+                <!-- DOWNLOAD RESUME IN NEW TAB + DOWNLOAD ATTRIBUTE -->
+                <a href="https://1drv.ms/b/c/5bc38c510559f1a0/IQCg8VkFUYzDIIBbTwgAAAAAAUr9zp9_AmA6ExTZPf6Fq0I?e=pnhFwI" 
+                   class="btn-python" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   download="Tushar_Chowdhury_Resume.pdf">
+                    Download Resume
+                </a>
+                <a href="/chatpage" class="btn-python">
+                    Chat with Me
+                </a>
+            </div>
+        </div>
+
+        <!-- Right: Welcome Message -->
+        <div class="text-center lg:text-left">
+            <h1 class="text-5xl md:text-7xl font-black leading-tight">
+                <span style="color:#FFD43B;">print(</span>"Hello, World!"<span style="color:#FFD43B;">)</span><br>
+                <span class="text-4xl md:text-6xl">I'm Tushar</span>
+            </h1>
+            <p class="text-xl text-var(--text-muted) mt-6 max-w-2xl font-light">
+                Building production-grade AI systems, scalable microservices, and full-stack applications<br>
+                with <strong>.NET Core • Python • React • Next.js • Azure • AWS</strong>
+            </p>
+            <div class="mt-10 flex flex-wrap gap-6 justify-center lg:justify-start">
+                <a href="#skills" class="px-8 py-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg hover:bg-yellow-500/20 transition backdrop-blur">
+                    Explore Skills
+                </a>
+                <!-- <a href="#projects" class="px-8 py-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg hover:bg-yellow-500/20 transition backdrop-blur">
+                    View Projects
+                </a> -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- QUICK STATS -->
+<section class="py-20 px-6">
+    <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+        <div>
+            <div class="text-5xl font-black text-yellow-400">9</div>
+            <div class="text-var(--text-muted)">Years Experience</div>
+        </div>
+        <div>
+            <div class="text-5xl font-black text-yellow-400">10+</div>
+            <div class="text-var(--text-muted)">Projects Delivered</div>
+        </div>
+        <div>
+            <div class="text-5xl font-black text-yellow-400">AI/ML</div>
+            <div class="text-var(--text-muted)">Production Systems</div>
+        </div>
+        <div>
+            <div class="text-5xl font-black text-yellow-400">Azure + AWS</div>
+            <div class="text-var(--text-muted)">Cloud Native</div>
+        </div>
+    </div>
+</section>
+
+<!-- ABOUT / CONTACT -->
+<section class="py-20 px-6 bg-black/30">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div class="glass-card p-10 glow-py card-hover">
+            <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-xl flex items-center justify-center mr-4 glow-py">
+                    <span class="text-2xl">></span>
+                </div>
+                <h3 class="text-3xl font-black">Let's Build Together</h3>
+            </div>
+            <p class="text-var(--text-muted) leading-relaxed mb-8">
+                Rock-solid <strong>Python</strong> & <strong>.NET Core</strong> backends • Production AI/ML with 
+                <strong>TensorFlow • PyTorch • Scikit-learn • Keras</strong> • Scalable <strong>microservices</strong> • 
+                <strong>Next.js + React</strong> full-stack • <strong>Azure • AWS • DevOps</strong> • 
+                Predictive analytics & data pipelines with <strong>Pandas • NumPy</strong><br><br>
+                I turn complex requirements into clean, fast, maintainable systems. <strong>Let’s build something great.</strong>
+            </p>
+            <a href="/chatpage" class="btn-python inline-block">
+                Start Chat
+            </a>
+        </div>
+
+        <div class="glass-card p-10 glow-py card-hover">
+            <div class="flex items-center mb-6">
+                <div class="w-12 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-xl flex items-center justify-center mr-4 glow-py">
+                    <span class="text-2xl">λ</span>
+                </div>
+                <h3 class="text-3xl font-black">About Me</h3>
+            </div>
+            <p class="text-var(--text-muted) leading-relaxed">
+                Full-Stack + AI Engineer who ships production systems that scale. 
+                Expert in both <strong>.NET</strong> and <strong>Python</strong> ecosystems, 
+                with deep experience in cloud architecture, machine learning, and modern web development.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- SKILLS – Your Real Stack -->
+<section id="skills" class="py-20 px-6">
+    <div class="max-w-6xl mx-auto text-center">
+        <h2 class="section-title">Core Expertise</h2>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mt-12">
+            {% set skills = [
+                "Python", ".NET Core", "C#", "Microservices", "React",
+                "Next.js", "FastAPI", "TensorFlow", "PyTorch", "Scikit-learn",
+                "Keras", "Pandas", "NumPy", "Azure", "AWS",
+                "Azure DevOps", "Docker", "Kubernetes", "SQL", "NoSQL",
+                "REST APIs", "Predictive Analytics", "Data Structures", "Agile", "Matplotlib"
+            ] %}
+            {% for skill in skills %}
+            <div class="glass-card py-6 px-8 rounded-xl glow-py card-hover border border-yellow-500/20">
+                <div class="text-xl font-bold text-yellow-300">{{ skill }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="py-20 px-6 bg-gradient-to-b from-transparent to-black/70">
+    <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-5xl md:text-6xl font-black mb-8 text-yellow-400">
+            Ready to build the future?
+        </h2>
+        <p class="text-xl text-var(--text-muted) mb-10">
+            Let's discuss your next big project — AI, cloud, or full-stack.
+        </p>
+        <a href="/chatpage" class="btn-python text-xl px-12 py-5">
+            Start Conversation
+        </a>
+    </div>
+</section>
+
+{% endblock %}
