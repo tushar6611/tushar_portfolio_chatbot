@@ -42,32 +42,6 @@
     .badge-py {
         @apply inline-block px-4 py-1 bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 rounded-full text-sm font-medium;
     }
-
-    /* FIXED: Skills cards now wrap long text properly on mobile */
-    .skill-card {
-        @apply glass-card py-6 px-4 rounded-xl glow-py card-hover border border-yellow-500/20;
-        min-height: 90px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        word-break: break-word;
-        hyphens: auto;
-    }
-    .skill-card > div {
-        @apply text-lg md:text-xl font-bold text-yellow-300 leading-tight;
-    }
-
-    /* Extra small screens: tighter grid */
-    @media (max-width: 480px) {
-        .skill-card {
-            padding: 1rem 0.75rem;
-            min-height: 80px;
-        }
-        .skill-card > div {
-            font-size: 0.95rem !important;
-        }
-    }
 </style>
 {% endblock %}
 
@@ -110,6 +84,7 @@
             </div>
 
             <div class="mt-8 flex flex-wrap gap-4">
+                <!-- DOWNLOAD RESUME IN NEW TAB + DOWNLOAD ATTRIBUTE -->
                 <a href="https://1drv.ms/b/c/5bc38c510559f1a0/IQCg8VkFUYzDIIBbTwgAAAAAAUr9zp9_AmA6ExTZPf6Fq0I?e=pnhFwI" 
                    class="btn-python" 
                    target="_blank" 
@@ -137,6 +112,9 @@
                 <a href="#skills" class="px-8 py-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg hover:bg-yellow-500/20 transition backdrop-blur">
                     Explore Skills
                 </a>
+                <!-- <a href="#projects" class="px-8 py-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg hover:bg-yellow-500/20 transition backdrop-blur">
+                    View Projects
+                </a> -->
             </div>
         </div>
     </div>
@@ -165,63 +143,166 @@
 </section>
 
 <!-- ABOUT / CONTACT -->
-<section class="py-20 px-6 bg-black/30">
-    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
-        <div class="glass-card p-10 glow-py card-hover">
-            <div class="flex items-center mb-6">
-                <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-xl flex items-center justify-center mr-4 glow-py">
-                    <span class="text-2xl">></span>
-                </div>
-                <h3 class="text-3xl font-black">Let's Build Together</h3>
-            </div>
-            <p class="text-var(--text-muted) leading-relaxed mb-8">
-                Rock-solid <strong>Python</strong> & <strong>.NET Core</strong> backends • Production AI/ML with 
-                <strong>TensorFlow • PyTorch • Scikit-learn • Keras</strong> • Scalable <strong>microservices</strong> • 
-                <strong>Next.js + React</strong> full-stack • <strong>Azure • AWS • DevOps</strong> • 
-                Predictive analytics & data pipelines with <strong>Pandas • NumPy</strong><br><br>
-                I turn complex requirements into clean, fast, maintainable systems. <strong>Let’s build something great.</strong>
-            </p>
-            <a href="/chatpage" class="btn-python inline-block">
-                Start Chat
-            </a>
-        </div>
-
-        <div class="glass-card p-10 glow-py card-hover">
-            <div class="flex items-center mb-6">
-                <div class="w-12 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-xl flex items-center justify-center mr-4 glow-py">
-                    <span class="text-2xl">λ</span>
-                </div>
-                <h3 class="text-3xl font-black">About Me</h3>
-            </div>
-            <p class="text-var(--text-muted) leading-relaxed">
-                Full-Stack + AI Engineer who ships production systems that scale. 
-                Expert in both <strong>.NET</strong> and <strong>Python</strong> ecosystems, 
-                with deep experience in cloud architecture, machine learning, and modern web development.
-            </p>
-        </div>
-    </div>
-</section>
-
-<!-- SKILLS – FIXED FOR MOBILE -->
+<!-- SKILLS – Grouped Glowing Boxes (Restored Style) -->
 <section id="skills" class="py-20 px-6">
     <div class="max-w-6xl mx-auto text-center">
         <h2 class="section-title">Core Expertise</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 mt-12 px-4 md:px-0">
-            {% set skills = [
-                "Python", ".NET Core", "C#", "Microservices", "React",
-                "Next.js", "FastAPI", "TensorFlow", "PyTorch", "Scikit-learn",
-                "Keras", "Pandas", "NumPy", "Azure", "AWS",
-                "Azure DevOps", "Docker", "Kubernetes", "SQL", "NoSQL",
-                "REST APIs", "Predictive Analytics", "Data Structures", "Agile", "Matplotlib"
-            ] %}
-            {% for skill in skills %}
-            <div class="skill-card">
-                <div>{{ skill }}</div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mt-16">
+
+            <!-- Languages -->
+            <div class="glass-card p-8 rounded-2xl glow-py card-hover border border-yellow-500/20">
+                <h3 class="text-2xl font-black text-yellow-300 mb-4">Languages</h3>
+                <ul class="text-var(--text-muted) space-y-2 text-lg">
+                    <li>Python</li>
+                    <li>C#</li>
+                    <li>JavaScript / TypeScript</li>
+                    <li>SQL</li>
+                </ul>
             </div>
-            {% endfor %}
+
+            <!-- Frameworks -->
+            <div class="glass-card p-8 rounded-2xl glow-py card-hover border border-yellow-500/20">
+                <h3 class="text-2xl font-black text-yellow-300 mb-4">Frameworks</h3>
+                <ul class="text-var(--text-muted) space-y-2 text-lg">
+                    <li>.NET Core</li>
+                    <li>FastAPI</li>
+                    <li>Flask</li>
+                    <li>React / Next.js</li>
+                </ul>
+            </div>
+
+            <!-- AI / Machine Learning -->
+            <div class="glass-card p-8 rounded-2xl glow-py card-hover border border-yellow-500/20">
+                <h3 class="text-2xl font-black text-yellow-300 mb-4">AI & Machine Learning</h3>
+                <ul class="text-var(--text-muted) space-y-2 text-lg">
+                    <li>TensorFlow</li>
+                    <li>PyTorch</li>
+                    <li>Scikit-learn</li>
+                    <li>Keras • Pandas • NumPy</li>
+                </ul>
+            </div>
+
+            <!-- Cloud & DevOps -->
+            <div class="glass-card p-8 rounded-2xl glow-py card-hover border border-yellow-500/20">
+                <h3 class="text-2xl font-black text-yellow-300 mb-4">Cloud & DevOps</h3>
+                <ul class="text-var(--text-muted) space-y-2 text-lg">
+                    <li>Azure • AWS</li>
+                    <li>Azure DevOps</li>
+                    <li>Docker • Kubernetes</li>
+                    <li>CI / CD Pipelines</li>
+                </ul>
+            </div>
+
+            <!-- Microservices -->
+            <div class="glass-card p-8 rounded-2xl glow-py card-hover border border-yellow-500/20">
+                <h3 class="text-2xl font-black text-yellow-300 mb-4">Microservices & Architecture</h3>
+                <ul class="text-var(--text-muted) space-y-2 text-lg">
+                    <li>Distributed Systems</li>
+                    <li>Event-Driven Architecture</li>
+                    <li>API Gateway</li>
+                    <li>Messaging Queues & Topics</li>
+                </ul>
+            </div>
+
+            <!-- Databases -->
+            <div class="glass-card p-8 rounded-2xl glow-py card-hover border border-yellow-500/20">
+                <h3 class="text-2xl font-black text-yellow-300 mb-4">Databases</h3>
+                <ul class="text-var(--text-muted) space-y-2 text-lg">
+                    <li>PostgreSQL • SQL Server</li>
+                    <li>MongoDB • Redis</li>
+                    <li>Cosmos DB</li>
+                    <li>Query Optimization</li>
+                </ul>
+            </div>
+
         </div>
     </div>
 </section>
+
+
+<!-- SKILLS – Your Real Stack -->
+<section id="skills" class="py-24 max-w-6xl mx-auto px-6">
+    <h2 class="text-3xl font-bold mb-10">Core Expertise</h2>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- Languages -->
+        <div class="glow-card">
+            <h3 class="text-xl font-semibold mb-3">Languages</h3>
+            <ul class="text-[var(--text-muted)] space-y-1">
+                <li>Python</li>
+                <li>C#</li>
+                <li>JavaScript</li>
+                <li>TypeScript</li>
+                <li>SQL</li>
+            </ul>
+        </div>
+
+        <!-- Frameworks -->
+        <div class="glow-card">
+            <h3 class="text-xl font-semibold mb-3">Frameworks</h3>
+            <ul class="text-[var(--text-muted)] space-y-1">
+                <li>FastAPI</li>
+                <li>Flask</li>
+                <li>.NET Core</li>
+                <li>React</li>
+                <li>Node.js</li>
+            </ul>
+        </div>
+
+        <!-- LLM / AI -->
+        <div class="glow-card">
+            <h3 class="text-xl font-semibold mb-3">AI / LLM</h3>
+            <ul class="text-[var(--text-muted)] space-y-1">
+                <li>OpenAI Models</li>
+                <li>GPT Fine-Tuning</li>
+                <li>RAG Pipelines</li>
+                <li>Embeddings + Vector DB</li>
+                <li>Prompt Engineering</li>
+            </ul>
+        </div>
+
+        <!-- Cloud -->
+        <div class="glow-card">
+            <h3 class="text-xl font-semibold mb-3">Cloud & DevOps</h3>
+            <ul class="text-[var(--text-muted)] space-y-1">
+                <li>Azure</li>
+                <li>Azure DevOps</li>
+                <li>CI/CD Pipelines</li>
+                <li>Docker</li>
+                <li>Kubernetes (AKS)</li>
+            </ul>
+        </div>
+
+        <!-- Microservices -->
+        <div class="glow-card">
+            <h3 class="text-xl font-semibold mb-3">Microservices</h3>
+            <ul class="text-[var(--text-muted)] space-y-1">
+                <li>Distributed Architecture</li>
+                <li>API Gateway</li>
+                <li>Event-Driven Systems</li>
+                <li>Background Workers</li>
+                <li>Messaging (Queues / Topics)</li>
+            </ul>
+        </div>
+
+        <!-- Databases -->
+        <div class="glow-card">
+            <h3 class="text-xl font-semibold mb-3">Databases</h3>
+            <ul class="text-[var(--text-muted)] space-y-1">
+                <li>PostgreSQL</li>
+                <li>MongoDB</li>
+                <li>Redis</li>
+                <li>Azure SQL</li>
+                <li>Cosmos DB</li>
+            </ul>
+        </div>
+
+    </div>
+</section>
+
+
 
 <!-- FINAL CTA -->
 <section class="py-20 px-6 bg-gradient-to-b from-transparent to-black/70">

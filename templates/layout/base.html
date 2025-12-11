@@ -112,135 +112,147 @@
     </main>
 
     <!-- PARTICLES + FINAL MOBILE-FRIENDLY NAVIGATION -->
-    <script>
-        // Particles
-        const canvas = document.getElementById('particles-canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        const mouse = { x: 0, y: 0 };
+  <script>
+    // ============================
+    // PARTICLES
+    // ============================
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    const mouse = { x: 0, y: 0 };
 
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        resize();
-        window.addEventListener('resize', resize);
-        window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
 
-        class Particle {
-            constructor() { this.reset(); }
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 3 + 1;
-                this.speedX = Math.random() * 0.6 - 0.3;
-                this.speedY = Math.random() * 0.6 - 0.3;
-                this.opacity = 0.3;
-            }
-            update() {
-                this.x += this.speedX; this.y += this.speedY;
-                const dx = mouse.x - this.x; const dy = mouse.y - this.y;
-                const dist = Math.hypot(dx, dy);
-                if (dist < 160) {
-                    const force = 160 / (dist * dist);
-                    this.speedX += dx * force * 0.0006;
-                    this.speedY += dy * force * 0.0006;
-                    this.opacity = Math.min(0.9, this.opacity + 0.02);
-                } else this.opacity = Math.max(0.2, this.opacity - 0.005);
-                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-            }
-            draw() {
-                ctx.fillStyle = `rgba(255, 212, 59, ${this.opacity})`;
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
-            }
+    class Particle {
+        constructor() { this.reset(); }
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 3 + 1;
+            this.speedX = Math.random() * 0.6 - 0.3;
+            this.speedY = Math.random() * 0.6 - 0.3;
+            this.opacity = 0.3;
         }
-
-        function initParticles() {
-            particles = [];
-            const count = Math.min(100, window.innerWidth / 12);
-            for (let i = 0; i < count; i++) particles.push(new Particle());
+        update() {
+            this.x += this.speedX; this.y += this.speedY;
+            const dx = mouse.x - this.x; const dy = mouse.y - this.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 160) {
+                const force = 160 / (dist * dist);
+                this.speedX += dx * force * 0.0006;
+                this.speedY += dy * force * 0.0006;
+                this.opacity = Math.min(0.9, this.opacity + 0.02);
+            } else this.opacity = Math.max(0.2, this.opacity - 0.005);
+            if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
         }
-        initParticles();
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => { p.update(); p.draw(); });
-            requestAnimationFrame(animate);
+        draw() {
+            ctx.fillStyle = `rgba(255, 212, 59, ${this.opacity})`;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
         }
-        animate();
-        window.addEventListener('resize', () => { resize(); initParticles(); });
+    }
 
-        // Mobile Menu Toggle
-        document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
-            document.getElementById('mobile-menu').classList.toggle('hidden');
+    function initParticles() {
+        particles = [];
+        const count = Math.min(100, window.innerWidth / 12);
+        for (let i = 0; i < count; i++) particles.push(new Particle());
+    }
+    initParticles();
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animate);
+    }
+    animate();
+    window.addEventListener('resize', () => { resize(); initParticles(); });
+
+    // ============================
+    // MOBILE MENU TOGGLE
+    // ============================
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
+        document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+
+    // ============================
+    // CLOSE MOBILE MENU ON LINK CLICK (IMPORTANT FIX)
+    // ============================
+    document.querySelectorAll("#mobile-menu a").forEach(link => {
+        link.addEventListener("click", () => {
+            document.getElementById("mobile-menu").classList.add("hidden");
+        });
+    });
+
+    // ============================
+    // NAVIGATION + ACTIVE SECTION HIGHLIGHT
+    // ============================
+    document.addEventListener("DOMContentLoaded", () => {
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+
+                if (href.includes('#') && href !== '/' && href !== '/home') {
+                    e.preventDefault();
+                    const hash = href.split('#')[1];
+                    if (hash) window.location.href = `/home#${hash}`;
+                }
+            });
         });
 
-        // FINAL FIX: Works perfectly from ANY page (including mobile)
-        document.addEventListener("DOMContentLoaded", () => {
-            const navLinks = document.querySelectorAll('.nav-link');
+        if (window.location.pathname === '/home' || window.location.pathname === '/home/') {
+            const sections = document.querySelectorAll('section[id]');
 
             navLinks.forEach(link => {
                 link.addEventListener('click', (e) => {
-                    const href = link.getAttribute('href');
-
-                    // Only handle section links (Skills, etc.)
-                    if (href.includes('#') && href !== '/' && href !== '/home') {
+                    if (link.getAttribute('href').includes('#')) {
                         e.preventDefault();
-                        const hash = href.split('#')[1];
-                        if (hash) {
-                            window.location.href = `/home#${hash}`;
+                        const targetId = link.getAttribute('href').split('#')[1];
+                        const target = document.getElementById(targetId);
+                        if (target) {
+                            target.scrollIntoView({ behavior: 'smooth' });
+                            navLinks.forEach(l => l.classList.remove('active'));
+                            link.classList.add('active');
                         }
                     }
                 });
             });
 
-            // Only run on /home page
-            if (window.location.pathname === '/home' || window.location.pathname === '/home/') {
-                const sections = document.querySelectorAll('section[id]');
-
-                navLinks.forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        if (link.getAttribute('href').includes('#')) {
-                            e.preventDefault();
-                            const targetId = link.getAttribute('href').split('#')[1];
-                            const target = document.getElementById(targetId);
-                            if (target) {
-                                target.scrollIntoView({ behavior: 'smooth' });
-                                navLinks.forEach(l => l.classList.remove('active'));
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').endsWith(`#${id}`)) {
                                 link.classList.add('active');
                             }
-                        }
-                    });
+                        });
+                    }
                 });
+            }, { threshold: 0.6, rootMargin: '-120px 0px -40% 0px' });
 
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const id = entry.target.getAttribute('id');
-                            navLinks.forEach(link => {
-                                link.classList.remove('active');
-                                if (link.getAttribute('href').endsWith(`#${id}`)) {
-                                    link.classList.add('active');
-                                }
-                            });
-                        }
-                    });
-                }, { threshold: 0.6, rootMargin: '-120px 0px -40% 0px' });
+            sections.forEach(section => observer.observe(section));
 
-                sections.forEach(section => observer.observe(section));
-
-                if (window.location.hash) {
-                    const hash = window.location.hash.substring(1);
-                    const target = document.getElementById(hash);
-                    const activeLink = Array.from(navLinks).find(l => l.getAttribute('href').endsWith(`#${hash}`));
-                    if (activeLink) {
-                        navLinks.forEach(l => l.classList.remove('active'));
-                        activeLink.classList.add('active');
-                    }
-                    if (target) {
-                        setTimeout(() => target.scrollIntoView({ behavior: 'smooth' }), 200);
-                    }
+            if (window.location.hash) {
+                const hash = window.location.hash.substring(1);
+                const target = document.getElementById(hash);
+                const activeLink = Array.from(navLinks).find(l => l.getAttribute('href').endsWith(`#${hash}`));
+                if (activeLink) {
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    activeLink.classList.add('active');
+                }
+                if (target) {
+                    setTimeout(() => target.scrollIntoView({ behavior: 'smooth' }), 200);
                 }
             }
-        });
-    </script>
+        }
+    });
+</script>
+
 
     {% block extra_scripts %}{% endblock %}
 </body>
