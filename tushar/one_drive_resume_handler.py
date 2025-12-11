@@ -13,4 +13,4 @@ def generate_resume_download_link():
     if not authkey:
         return "OneDrive authkey not configured!"
 
-    return f"https://1drv.ms/b/c/5bc38c510559f1a0/IQCg8VkFUYzDIIBbTwgAAAAAAUr9zp9_AmA6ExTZPf6Fq0I?e=pnhFwI"
+    return f"https://1drv.ms/b/c/5bc38c510559f1a0/IQD5JrcQRFbnRb_3Vd9PaZulAUQZ3eijzmblXAfNAvcKBSk?e=Mbqpdz"
