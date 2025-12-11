@@ -2,6 +2,8 @@ import os
 import re
 import io
 import json
+import difflib
+from difflib import SequenceMatcher
 from fastapi import FastAPI, UploadFile, File, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -229,7 +231,7 @@ def sse_event(progress: int, message: str):
 # -------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    with open("templates/index.html") as f:
+    with open("templates/username.html") as f:
         html = f.read()
     return Template(html).render()
 
