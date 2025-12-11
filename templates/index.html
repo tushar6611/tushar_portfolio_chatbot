@@ -5,34 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tushar - AI Assistant</title>
 
-    <!-- Favicon & App Icons -->
-    <link rel="icon" href=" ../static/icons/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="../static/icons/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" sizes="180x180" href="../static/icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../static/icons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="../static/icons/favicon-16x16.png">
     <link rel="manifest" href="../static/site.webmanifest">
     <meta name="theme-color" content="#000000">
-
+    <script src="https://unpkg.com/event-source-polyfill"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         body { font-family: 'Inter', sans-serif; overflow: hidden; }
-        #matrix-bg {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: -1; background: black;
-        }
+        #matrix-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: black; }
         .scrollbar-thin::-webkit-scrollbar { width: 6px; }
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.2); border-radius: 4px;
-        }
-        #scoreResult {
-        max-height: 250px;
-        overflow-y: auto;
-    }
-
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        #scoreResult { max-height: 250px; overflow-y: auto; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -61,8 +49,6 @@
                             Hi! Ask about my skills, projects, or type <strong>"resume"</strong> to download my CV
                         </p>
                     </div>
-
-                    <!-- Resume Score Feature -->
                     <div class="text-center">
                         <p class="inline-block bg-white/20 text-white/90 px-4 py-2 rounded-full text-sm backdrop-blur">
                             Want to know how well your resume matches a job description?
@@ -74,18 +60,11 @@
                 <!-- Input Form -->
                 <div class="p-4 sm:p-6 border-t border-white/20 shrink-0 bg-black/10">
                     <form id="chat-form" class="flex flex-col sm:flex-row gap-3">
-                        <input
-                            type="text"
-                            id="message-input"
-                            placeholder="Ask me anything..."
+                        <input type="text" id="message-input" placeholder="Ask me anything..."
                             class="flex-1 px-5 py-3 sm:py-4 rounded-full bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-4 focus:ring-pink-500/50 transition text-base"
-                            autocomplete="off"
-                            required
-                        />
-                        <button
-                            type="submit"
-                            class="px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-full text-white font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg whitespace-nowrap"
-                        >
+                            autocomplete="off" required />
+                        <button type="submit"
+                            class="px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-full text-white font-semibold transition transform hover:scale-105 active:scale-95 shadow-lg whitespace-nowrap">
                             Send Message
                         </button>
                     </form>
@@ -95,74 +74,72 @@
     </div>
 
     <!-- Resume Score Modal -->
-  <div id="scoreModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[999]">
-    <div class="bg-white/10 backdrop-blur-xl p-6 rounded-2xl w-full max-w-lg border border-white/20 shadow-xl">
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-xl font-bold text-white">Resume Match Score</h2>
-
-    <!-- Blue Refresh Button -->
-    <button id="refreshBtn"
-        class="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition flex items-center justify-center">
-        ⟳
-    </button>
-</div>
-
-        <label class="text-white text-sm">Upload Resume (PDF)</label>
-        <input id="resumeFile" type="file" accept="application/pdf"
-               class="w-full mt-1 mb-4 text-white/80 bg-white/10 px-3 py-2 rounded-xl">
-
-        <label class="text-white text-sm">Paste Job Description</label>
-        <textarea id="jobDescription" rows="5"
-            class="w-full mt-1 bg-white/10 text-white p-3 rounded-xl"></textarea>
-
-        <button id="analyzeBtn"
-            class="w-full mt-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold text-white">
-            Analyze Score
-        </button>
-        
-
-        <!-- Score Result -->
-        <div id="scoreResult" class="hidden mt-6 p-4 bg-white/20 rounded-xl text-white">
-            <h3 class="font-bold text-lg">Match Score:</h3>
-            <p id="scoreValue" class="text-4xl font-extrabold mt-2 mb-4">--%</p>
-
-            <div>
-                <h4 class="font-semibold">Strengths</h4>
-                <ul id="strengthList" class="list-disc ml-5 text-sm opacity-90"></ul>
+    <div id="scoreModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[999]">
+        <div class="bg-white/10 backdrop-blur-xl p-6 rounded-2xl w-full max-w-lg border border-white/20 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-white">Resume Match Score</h2>
+                <button id="refreshBtn"
+                    class="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition">
+                    Refresh
+                </button>
             </div>
 
-            <div class="mt-3">
-                <h4 class="font-semibold">Missing Skills / Weaknesses</h4>
-                <ul id="weaknessList" class="list-disc ml-5 text-sm opacity-90"></ul>
+            <label class="text-white text-sm">Upload Resume (PDF)</label>
+            <input id="resumeFile" type="file" accept="application/pdf"
+                   class="w-full mt-1 mb-4 text-white/80 bg-white/10 px-3 py-2 rounded-xl">
+
+            <label class="text-white text-sm">Paste Job Description</label>
+            <textarea id="jobDescription" rows="5"
+                      class="w-full mt-1 bg-white/10 text-white p-3 rounded-xl resize-none"></textarea>
+
+            <!-- Analyze Button with Progress Bar Inside (NO percentage text) -->
+            <button id="analyzeBtn"
+                class="relative w-full mt-4 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl font-semibold text-white overflow-hidden transition-all duration-300">
+                <span id="analyzeText" class="relative z-10">Analyze Score</span>
+
+                <!-- Silent progress bar (no number) -->
+                <div id="buttonProgressBar"
+                     class="absolute inset-0 left-0 top-0 h-full bg-white/40 transition-all duration-500 ease-out"
+                     style="width: 0%"></div>
+            </button>
+
+            <!-- Score Result -->
+            <div id="scoreResult" class="hidden mt-6 p-5 bg-white/20 rounded-xl text-white backdrop-blur">
+                <h3 class="font-bold text-xl mb-2">Match Score:</h3>
+                <p id="scoreValue" class="text-5xl font-extrabold text-green-400 mb-4">--%</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold text-lg">Strengths</h4>
+                        <ul id="strengthList" class="list-disc ml-6 text-sm opacity-90 mt-1"></ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-lg">Missing Skills / Weaknesses</h4>
+                        <ul id="weaknessList" class="list-disc ml-6 text-sm opacity-90 mt-1"></ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-lg">Suggestions</h4>
+                        <ul id="suggestionList" class="list-disc ml-6 text-sm opacity-90 mt-1"></ul>
+                    </div>
+                </div>
             </div>
 
-            <div class="mt-3">
-                <h4 class="font-semibold">Suggestions</h4>
-                <ul id="suggestionList" class="list-disc ml-5 text-sm opacity-90"></ul>
-            </div>
+            <button id="closeModal"
+                class="w-full mt-4 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-white font-medium transition">
+                Close
+            </button>
         </div>
-
-        <button id="closeModal"
-            class="w-full mt-4 py-2 bg-white/20 rounded-xl text-white">
-            Close
-        </button>
     </div>
-</div>
 
-    <!-- Matrix Animation -->
+    <!-- Matrix Rain Animation -->
     <script>
         const canvas = document.getElementById("matrix-bg");
         const ctx = canvas.getContext("2d");
-
-        function setupCanvas() {
-            canvas.height = window.innerHeight;
-            canvas.width = window.innerWidth;
-        }
+        function setupCanvas() { canvas.height = window.innerHeight; canvas.width = window.innerWidth; }
         setupCanvas();
-
         const chars = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%^&*()*&^%";
         const fontSize = 16;
-        const columns = Math.floor(canvas.width / fontSize);
+        let columns = Math.floor(canvas.width / fontSize);
         const drops = Array(columns).fill(1);
 
         function drawMatrix() {
@@ -170,7 +147,6 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "#0aff0a";
             ctx.font = fontSize + "px monospace";
-
             for (let i = 0; i < drops.length; i++) {
                 const text = chars.charAt(Math.floor(Math.random() * chars.length));
                 ctx.fillText(text, i * fontSize, drops[i] * fontSize);
@@ -183,100 +159,165 @@
     </script>
 
     <!-- Resume Score Modal Logic -->
-  <script>
-const modal = document.getElementById("scoreModal");
-const analyzeBtn = document.getElementById("analyzeBtn");
-const scoreResult = document.getElementById("scoreResult");
-const scoreValue = document.getElementById("scoreValue");
-const strengthList = document.getElementById("strengthList");
-const weaknessList = document.getElementById("weaknessList");
-const suggestionList = document.getElementById("suggestionList");
+    <script>
+        // Elements
+        const modal = document.getElementById("scoreModal");
+        const openScore = document.getElementById("openScoreModal");
+        const closeModalBtn = document.getElementById("closeModal");
+        const analyzeBtn = document.getElementById("analyzeBtn");
+        const refreshBtn = document.getElementById("refreshBtn");
 
-document.getElementById("openScoreModal").onclick = () => modal.classList.remove("hidden");
-document.getElementById("closeModal").onclick = () => modal.classList.add("hidden");
+        const scoreResult = document.getElementById("scoreResult");
+        const scoreValue = document.getElementById("scoreValue");
+        const strengthList = document.getElementById("strengthList");
+        const weaknessList = document.getElementById("weaknessList");
+        const suggestionList = document.getElementById("suggestionList");
 
-analyzeBtn.onclick = async () => {
-    const resumeFile = document.getElementById("resumeFile").files[0];
-    const jd = document.getElementById("jobDescription").value.trim();
+        const analyzeText = document.getElementById("analyzeText");
+        const buttonProgressBar = document.getElementById("buttonProgressBar");
 
-    if (!resumeFile || !jd) {
-        alert("Please upload resume and paste job description.");
-        return;
-    }
+        // Open / Close modal
+        openScore.onclick = () => modal.classList.remove("hidden");
+        closeModalBtn.onclick = () => modal.classList.add("hidden");
+        modal.addEventListener("click", e => { if (e.target === modal) modal.classList.add("hidden"); });
 
-    const formData = new FormData();
-    formData.append("resume", resumeFile);
-    formData.append("job_description", jd);
-
-    try {
-        const response = await fetch("/resume-score", {
-            method: "POST",
-            body: formData
-        });
-
-        if (!response.ok) {
-            const text = await response.text();
-            console.error("Server error:", text);
-            alert("Server error: " + text);
-            return;
+        function displayList(id, arr) {
+            const el = document.getElementById(id);
+            el.innerHTML = "";
+            arr = arr || [];
+            if (arr.length === 0) {
+                el.innerHTML = "<li class='text-gray-400'>None detected</li>";
+                return;
+            }
+            arr.slice(0, 30).forEach(item => {
+                const li = document.createElement("li");
+                li.textContent = item;
+                el.appendChild(li);
+            });
         }
 
-        const data = await response.json();
+        function resetProgress() {
+            buttonProgressBar.style.width = "0%";
+            analyzeText.textContent = "Analyze Score";
+        }
 
-        // Show score
-        scoreResult.classList.remove("hidden");
-        scoreValue.innerText = data.final_score + "%";
+        function createSSEParser(onEvent) {
+            let buf = "";
+            const decoder = new TextDecoder();
+            return {
+                feed(chunk) {
+                    buf += decoder.decode(chunk, { stream: true });
+                    let parts = buf.split("\n\n");
+                    buf = parts.pop();
+                    for (let part of parts) {
+                        const lines = part.split(/\r?\n/);
+                        for (let line of lines) {
+                            if (line.startsWith("data:")) {
+                                try { onEvent(JSON.parse(line.slice(5).trim())); } catch (e) {}
+                            }
+                        }
+                    }
+                },
+                flush() {
+                    if (buf) {
+                        const lines = buf.split(/\r?\n/);
+                        for (let line of lines) {
+                            if (line.startsWith("data:")) {
+                                try { onEvent(JSON.parse(line.slice(5).trim())); } catch (e) {}
+                            }
+                        }
+                        buf = "";
+                    }
+                }
+            };
+        }
 
-        // Clear old lists
-        strengthList.innerHTML = "";
-        weaknessList.innerHTML = "";
-        suggestionList.innerHTML = "";
+        async function analyzeResume(e) {
+            e?.preventDefault();
 
-        // Add strengths
-        data.matched_skills.forEach(skill => {
-            const li = document.createElement("li");
-            li.textContent = skill;
-            strengthList.appendChild(li);
-        });
+            const fileInput = document.getElementById("resumeFile");
+            const jobDesc = document.getElementById("jobDescription").value.trim();
 
-        // Add missing skills
-        data.missing_skills.forEach(skill => {
-            const li = document.createElement("li");
-            li.textContent = skill;
-            weaknessList.appendChild(li);
-        });
+            if (!fileInput.files.length || !jobDesc) {
+                alert("Please upload your resume and paste a job description.");
+                return;
+            }
 
-        // Add suggestions (based on missing keywords)
-        data.missing_keywords.forEach(kw => {
-            const li = document.createElement("li");
-            li.textContent = "Add keyword: " + kw;
-            suggestionList.appendChild(li);
-        });
+            // Reset UI
+            scoreResult.classList.add("hidden");
+            scoreValue.textContent = "--%";
+            strengthList.innerHTML = "";
+            weaknessList.innerHTML = "";
+            suggestionList.innerHTML = "";
+            resetProgress();
 
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Something went wrong");
-    }
-};
-const refreshBtn = document.getElementById("refreshBtn");
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            formData.append("job_description", jobDesc);
 
-refreshBtn.onclick = () => {
-    // clear only JD
-    document.getElementById("jobDescription").value = "";
+            let response;
+            try {
+                response = await fetch("/resume-progress", { method: "POST", body: formData });
+            } catch (err) {
+                alert("Network error. Check console.");
+                console.error(err);
+                return;
+            }
 
-    // hide score section
-    scoreResult.classList.add("hidden");
+            if (!response.ok || !response.body) {
+                alert("Server error: " + response.status);
+                return;
+            }
 
-    // reset values
-    scoreValue.innerText = "--%";
-    strengthList.innerHTML = "";
-    weaknessList.innerHTML = "";
-    suggestionList.innerHTML = "";
-};
+            const reader = response.body.getReader();
+            const sse = createSSEParser(obj => {
+                if (typeof obj.progress === "number") {
+                    const p = Math.min(100, Math.round(obj.progress));
+                    buttonProgressBar.style.width = p + "%";
 
-</script>
+                    // Change text while processing
+                    analyzeText.textContent = (p > 0 && p < 100) ? "Analyzing..." : "Analyze Score";
+                }
 
-    <!-- Chat Logic -->
+                if (obj.progress === 100) {
+                    scoreResult.classList.remove("hidden");
+                    const finalScore = obj.final_score ?? obj.score ?? 0;
+                    scoreValue.textContent = finalScore + "%";
+
+                    displayList("strengthList", obj.matched_skills || obj.strengths);
+                    displayList("weaknessList", obj.missing_skills || obj.weaknesses);
+                    displayList("suggestionList", obj.missing_keywords || obj.suggestions);
+                }
+            });
+
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    sse.feed(value);
+                }
+                sse.flush();
+            } catch (err) {
+                console.error("Stream error:", err);
+            } finally {
+                reader.releaseLock?.();
+            }
+        }
+
+        // Event Listeners
+        analyzeBtn.addEventListener("click", analyzeResume);
+
+        refreshBtn.onclick = () => {
+            document.getElementById("jobDescription").value = "";
+            scoreResult.classList.add("hidden");
+            resetProgress();
+            scoreValue.textContent = "--%";
+            strengthList.innerHTML = "";
+            weaknessList.innerHTML = "";
+            suggestionList.innerHTML = "";
+        };
+    </script>
+
     <script src="/static/script.js"></script>
 </body>
 </html>

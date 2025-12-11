@@ -2,8 +2,6 @@ import os
 import re
 import io
 import json
-import difflib
-
 from fastapi import FastAPI, UploadFile, File, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 
 from openai import OpenAI
 from PyPDF2 import PdfReader
+from io import BytesIO
 
 # Internal imports
 from common.appLogger import AppLogger
@@ -18,6 +17,15 @@ from common.secrets_env import load_secrets_env_variables
 from tushar.common_tushar_funcs import load_resume_text
 from tushar.one_drive_resume_handler import generate_resume_download_link
 from common.db import SessionLocal, init_db, ChatUser, ChatMessage
+
+import time
+from fastapi import FastAPI, UploadFile, Form, Request
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from jinja2 import Template
+from PyPDF2 import PdfReader
+from openai import OpenAI
+import math
 
 # Initialize DB
 init_db()
@@ -146,14 +154,84 @@ PREDEFINED_ANSWERS = {
 # HELPER FUNCTIONS
 # --------------------------------------------------------------------
 
-def extract_pdf_text(uploaded_pdf: UploadFile) -> str:
-    """Extract text using PyPDF2 only (lightweight, Render friendly)."""
-    reader = PdfReader(uploaded_pdf.file)
+def extract_pdf_text_from_bytes(pdf_bytes: bytes) -> str:
+    reader = PdfReader(BytesIO(pdf_bytes))
     text = ""
     for page in reader.pages:
-        extracted = page.extract_text() or ""
-        text += extracted + "\n"
+        text += page.extract_text() or ""
     return text
+
+# -------------------------------------------------
+# Embeddings + similarity
+# -------------------------------------------------
+def embedding(text):
+    resp = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=text
+    )
+    return resp.data[0].embedding
+
+
+def cosine_similarity(a, b):
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(sum(x * x for x in a))
+    norm_b = math.sqrt(sum(x * x for x in b))
+    return dot / (norm_a * norm_b)
+
+
+def semantic_score(resume_text, job_desc):
+    emb_resume = embedding(resume_text)
+    emb_job = embedding(job_desc)
+    score = cosine_similarity(emb_resume, emb_job)
+    return round(max(0, min(1, score)) * 100, 2)
+
+
+# -------------------------------------------------
+# Resume analysis
+# -------------------------------------------------
+def analyze_resume(resume_text, job_desc, score):
+    prompt = f"""
+Resume:
+{resume_text}
+
+Job Description:
+{job_desc}
+
+Match Score: {score}%
+
+Return JSON with keys:
+strengths, weaknesses, suggestions
+5 items each.
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    try:
+        return json.loads(response.choices[0].message.content)
+    except:
+        return {
+            "strengths": [],
+            "weaknesses": [],
+            "suggestions": []
+        }
+def sse_event(progress: int, message: str):
+    return f"data: {json.dumps({'progress': progress, 'message': message})}\n\n"
+
+# -------------------------------------------------
+# SSE STREAM ROUTE
+# -------------------------------------------------
+
+# -------------------------------------------------
+# HTML
+# -------------------------------------------------
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    with open("templates/index.html") as f:
+        html = f.read()
+    return Template(html).render()
 
 
 def clean_words(text):
@@ -308,40 +386,115 @@ async def chat(message: str = Form(...), username: str = Form(...)):
         return {"response": response_text}
     finally:
         db.close()
+def extract_keywords(text: str):
+    """Extract skill-like words from resume or JD."""
+    text = text.lower()
+    words = re.findall(r"[a-zA-Z]+(?:\s[a-zA-Z]+)?", text)
+    return set([w.strip() for w in words if len(w.strip()) > 2])
 
+def match_skills(resume_text: str, job_description: str):
+    """Match resume skills vs job description skills."""
+    resume_keywords = extract_keywords(resume_text)
+    jd_keywords = extract_keywords(job_description)
 
-# --------------------------------------------------------------------
-# RESUME SCORING API (LIGHTWEIGHT VERSION)
-# --------------------------------------------------------------------
+    matched = sorted(list(resume_keywords & jd_keywords))
+    missing = sorted(list(jd_keywords - resume_keywords))
 
-@app.post("/resume-score")
-async def resume_score_api(
-    resume: UploadFile = File(...),
-    job_description: str = Form(...)
-):
-    resume_text = extract_pdf_text(resume)
+    return matched, missing
 
-    k_score, missing_keywords = keyword_score(resume_text, job_description)
-    s_score = semantic_score(resume_text, job_description)
-    skillscore, matched_skills, missing_skills = skill_score(resume_text, job_description)
-    exp_score = experience_score(resume_text, job_description)
+def calculate_match_score(matched, missing):
+    """Simple score calculation based on matched skills."""
+    total = len(matched) + len(missing)
+    if total == 0:
+        return 0
 
-    final_score = round(
-        k_score * 0.30 +
-        s_score * 0.40 +
-        skillscore * 0.20 +
-        exp_score * 0.10,
-        2
-    )
+    return round((len(matched) / total) * 100)
+def extract_pdf_text(file: UploadFile) -> str:
+    """Wrapper to extract PDF text from UploadFile."""
+    pdf_bytes = file.file.read()
+    return extract_pdf_text_from_bytes(pdf_bytes)
+# ---------------------------
+# Fuzzy matching utilities
+# ---------------------------
+def extract_keywords(text: str):
+    """Extract skill-like or relevant words/phrases from text."""
+    text = text.lower()
+    # Words or 2-3 word phrases
+    words = re.findall(r"[a-zA-Z0-9#+]+(?:\s[a-zA-Z0-9#+]+){0,2}", text)
+    return set([w.strip() for w in words if len(w.strip()) > 1])
 
-    return {
-        "final_score": final_score,
-        "keyword_score": k_score,
-        "semantic_score": s_score,
-        "skill_match_score": skillscore,
-        "experience_score": exp_score,
-        "matched_skills": matched_skills,
-        "missing_skills": missing_skills[:20],
-        "missing_keywords": missing_keywords[:20]
-    }
+def fuzzy_match(word, candidates, threshold=0.75):
+    """Return True if word matches any candidate above threshold similarity."""
+    for c in candidates:
+        if SequenceMatcher(None, word, c).ratio() >= threshold:
+            return True
+    return False
+
+def match_skills_fuzzy(resume_text: str, job_description: str, threshold=0.75):
+    """Match resume skills vs job description skills using fuzzy logic."""
+    resume_keywords = extract_keywords(resume_text)
+    jd_keywords = extract_keywords(job_description)
+
+    matched = []
+    missing = []
+
+    for jd_kw in jd_keywords:
+        if fuzzy_match(jd_kw, resume_keywords, threshold):
+            matched.append(jd_kw)
+        else:
+            missing.append(jd_kw)
+
+    return matched, missing
+
+def calculate_fuzzy_score(matched, missing):
+    """Score based on fuzzy matched skills."""
+    total = len(matched) + len(missing)
+    if total == 0:
+        return 0
+    return round((len(matched) / total) * 100, 2)
+
+@app.post("/resume-progress")
+async def resume_progress(file: UploadFile = File(...), job_description: str = Form(...)):
+    # Read PDF content
+    pdf_bytes = await file.read()
+    resume_text = extract_pdf_text_from_bytes(pdf_bytes)
+    jd_text = job_description.strip()
+
+    async def event_stream():
+        # 10% - reading resume
+        yield sse_event(10, "Reading resume...")
+
+        # 30% - extracted text
+        yield sse_event(30, "Extracted resume text.")
+
+        # 50% - fuzzy skill matching
+        matched_skills, missing_skills = match_skills_fuzzy(resume_text, jd_text, threshold=0.75)
+        yield sse_event(50, "Matching skills...")
+
+        # 80% - calculate fuzzy score
+        skill_score_value = calculate_fuzzy_score(matched_skills, missing_skills)
+        yield sse_event(80, "Calculating score...")
+
+        # Experience score
+        exp_score_value = experience_score(resume_text, jd_text)
+
+        # Final score (weighted)
+        final_score = round(
+            skill_score_value * 0.7 +  # fuzzy skill weight
+            exp_score_value * 0.3,     # experience weight
+            2
+        )
+
+        # 100% - done
+        final_payload = {
+            "progress": 100, 
+            "final_score": final_score,
+            "fuzzy_skill_match_score": skill_score_value,
+            "experience_score": exp_score_value,
+            "matched_skills": matched_skills[:50],
+            "missing_skills": missing_skills[:50]
+        }
+        yield f"data: {json.dumps(final_payload)}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
