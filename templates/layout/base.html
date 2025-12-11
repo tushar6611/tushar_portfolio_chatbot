@@ -72,10 +72,11 @@
 
             <nav class="hidden md:flex items-center space-x-8 ml-20">
                 <a href="/home" class="nav-link" data-section="home">Home</a>
-                <a href="/#skills" class="nav-link" data-section="skills">Skills</a>
-                <!-- <a href="/#projects" class="nav-link" data-section="projects">Projects</a>
-                <a href="/#experience" class="nav-link" data-section="experience">Experience</a>
-                <a href="/#contact" class="nav-link" data-section="contact">Contact</a> -->
+                <a href="/home#skills" class="nav-link" data-section="skills">Skills</a>
+                <!-- Uncomment when ready -->
+                <!-- <a href="/home#projects" class="nav-link" data-section="projects">Projects</a>
+                <a href="/home#experience" class="nav-link" data-section="experience">Experience</a>
+                <a href="/home#contact" class="nav-link" data-section="contact">Contact</a> -->
             </nav>
 
             <div class="ml-auto">
@@ -92,13 +93,15 @@
             </button>
         </div>
 
+        <!-- MOBILE MENU - FIXED: Now uses /home#skills -->
         <div id="mobile-menu" class="hidden md:hidden bg-black/95 backdrop-blur-2xl border-t border-white/10">
             <div class="px-8 py-6 space-y-4">
                 <a href="/home" class="block py-3 text-gray-300 hover:text-white text-lg">Home</a>
-                <a href="/#skills" class="block py-3 text-gray-300 hover:text-white text-lg">Skills</a>
-                <!-- <a href="/#projects" class="block py-3 text-gray-300 hover:text-white text-lg">Projects</a>
-                <a href="/#experience" class="block py-3 text-gray-300 hover:text-white text-lg">Experience</a>
-                <a href="/#contact" class="block py-3 text-gray-300 hover:text-white text-lg">Contact</a> -->
+                <a href="/home#skills" class="block py-3 text-gray-300 hover:text-white text-lg">Skills</a>
+                <!-- Uncomment when ready -->
+                <!-- <a href="/home#projects" class="block py-3 text-gray-300 hover:text-white text-lg">Projects</a>
+                <a href="/home#experience" class="block py-3 text-gray-300 hover:text-white text-lg">Experience</a>
+                <a href="/home#contact" class="block py-3 text-gray-300 hover:text-white text-lg">Contact</a> -->
                 <a href="/chatpage" class="block py-4 text-center bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-xl">Chat with Me</a>
             </div>
         </div>
@@ -108,7 +111,7 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- PARTICLES + FINAL NAVIGATION FIX (WORKS FROM ANY PAGE) -->
+    <!-- PARTICLES + FINAL MOBILE-FRIENDLY NAVIGATION -->
     <script>
         // Particles
         const canvas = document.getElementById('particles-canvas');
@@ -164,12 +167,12 @@
         animate();
         window.addEventListener('resize', () => { resize(); initParticles(); });
 
-        // Mobile Menu
+        // Mobile Menu Toggle
         document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
             document.getElementById('mobile-menu').classList.toggle('hidden');
         });
 
-        // FINAL WORKING: Click from ANY page → go to /home + scroll + highlight
+        // FINAL FIX: Works perfectly from ANY page (including mobile)
         document.addEventListener("DOMContentLoaded", () => {
             const navLinks = document.querySelectorAll('.nav-link');
 
@@ -177,23 +180,21 @@
                 link.addEventListener('click', (e) => {
                     const href = link.getAttribute('href');
 
-                    // If link contains # (Skills, Projects, etc.)
-                    if (href.includes('#') && href !== '/#') {
+                    // Only handle section links (Skills, etc.)
+                    if (href.includes('#') && href !== '/' && href !== '/home') {
                         e.preventDefault();
                         const hash = href.split('#')[1];
                         if (hash) {
-                            // Always go to /home with the hash
                             window.location.href = `/home#${hash}`;
                         }
                     }
                 });
             });
 
-            // Only activate scroll/highlight when on /home
+            // Only run on /home page
             if (window.location.pathname === '/home' || window.location.pathname === '/home/') {
                 const sections = document.querySelectorAll('section[id]');
 
-                // Smooth scroll + highlight when clicking on /home
                 navLinks.forEach(link => {
                     link.addEventListener('click', (e) => {
                         if (link.getAttribute('href').includes('#')) {
@@ -209,7 +210,6 @@
                     });
                 });
 
-                // Highlight on scroll
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
@@ -226,7 +226,6 @@
 
                 sections.forEach(section => observer.observe(section));
 
-                // On load with hash (e.g. /home#skills)
                 if (window.location.hash) {
                     const hash = window.location.hash.substring(1);
                     const target = document.getElementById(hash);
