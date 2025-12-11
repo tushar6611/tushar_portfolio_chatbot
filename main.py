@@ -1,46 +1,37 @@
-from fastapi import FastAPI, Form
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from starlette.requests import Request
 import os
+import re
+import io
+import json
 import difflib
 
+from fastapi import FastAPI, UploadFile, File, Form, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
 from openai import OpenAI
+from PyPDF2 import PdfReader
+
+# Internal imports
 from common.appLogger import AppLogger
 from common.secrets_env import load_secrets_env_variables
 from tushar.common_tushar_funcs import load_resume_text
 from tushar.one_drive_resume_handler import generate_resume_download_link
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from common.db import SessionLocal, init_db, ChatUser, ChatMessage
-import os
-from fastapi import UploadFile, File
-import PyPDF2
-import io
-import json
-from fastapi import APIRouter, UploadFile, File, Form
-import pdfplumber
-import re
-import spacy
-from sentence_transformers import SentenceTransformer, util
 
+# Initialize DB
 init_db()
-nlp = spacy.load("en_core_web_sm")
-model = SentenceTransformer("all-MiniLM-L6-v2")
 
+# Initialize FastAPI
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static", html=True), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# -------------------
-# Load secrets & client
-# -------------------
+# Load secrets & OpenAI client
 load_secrets_env_variables()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# Logger setup
 logger = AppLogger({
     "name": "portfolio_bot",
     "log_file": "logs/portfolio.log",
@@ -48,14 +39,13 @@ logger = AppLogger({
     "log_to_stdout": True
 })
 
-# -------------------
-# Load resume once
-# -------------------
+# Load resume text once
 RESUME_TEXT = load_resume_text()
 
-# -------------------
-# Predefined answers
-# -------------------
+
+# --------------------------------------------------------------------
+# PREDEFINED ANSWERS
+# --------------------------------------------------------------------
 PREDEFINED_ANSWERS = {
     "how are you": "I'm just a program, but thanks for asking! How can I assist you with Tushar's profile today?",
     "hi": "Hi! I'm Tushar’s AI assistant. Ask about his skills, experience, projects, or type 'resume' to download his CV.",
@@ -151,9 +141,125 @@ PREDEFINED_ANSWERS = {
 
 }
 
-# -------------------
-# Routes
-# -------------------
+
+# --------------------------------------------------------------------
+# HELPER FUNCTIONS
+# --------------------------------------------------------------------
+
+def extract_pdf_text(uploaded_pdf: UploadFile) -> str:
+    """Extract text using PyPDF2 only (lightweight, Render friendly)."""
+    reader = PdfReader(uploaded_pdf.file)
+    text = ""
+    for page in reader.pages:
+        extracted = page.extract_text() or ""
+        text += extracted + "\n"
+    return text
+
+
+def clean_words(text):
+    return re.findall(r"\b[a-zA-Z0-9+#.]+\b", text.lower())
+
+
+def extract_skills_simple(text):
+    """Lightweight skill detection using simple keyword scanning."""
+    keywords = [
+        "python", "fastapi", "sql", "azure", "aws", "gcp",
+        "ml", "ai", "docker", "kubernetes", "react", "next.js"
+    ]
+    text = text.lower()
+    return [k for k in keywords if k in text]
+
+
+# ---------------------------
+#  OPENAI EMBEDDING UTILS
+# ---------------------------
+def cosine_similarity(a, b):
+    import math
+    dot = sum(x * y for x, y in zip(a, b))
+    na = math.sqrt(sum(x * x for x in a))
+    nb = math.sqrt(sum(x * x for x in b))
+    if na == 0 or nb == 0:
+        return 0
+    return dot / (na * nb)
+
+
+def get_embedding(text):
+    result = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=text[:2000]
+    )
+    return result.data[0].embedding
+
+
+# --------------------------------------------------------------------
+# SCORE CALCULATIONS (NO heavy ML, NO spaCy, NO SentenceTransformer)
+# --------------------------------------------------------------------
+
+def keyword_score(resume_text, jd_text):
+    resume_words = set(clean_words(resume_text))
+    jd_words = clean_words(jd_text)
+    matches = [w for w in jd_words if w in resume_words]
+    missing = list(set(jd_words) - resume_words)
+
+    if not jd_words:
+        return 0, []
+
+    score = (len(matches) / len(jd_words)) * 100
+    return round(score, 2), missing
+
+
+def semantic_score(resume_text, jd_text):
+    try:
+        emb_r = get_embedding(resume_text)
+        emb_j = get_embedding(jd_text)
+        sim = cosine_similarity(emb_r, emb_j)
+        return round(sim * 100, 2)
+    except Exception as e:
+        logger.error(f"Semantic scoring error: {e}")
+        return 50.0
+
+
+def skill_score(resume_text, jd_text):
+    resume_skills = extract_skills_simple(resume_text)
+    jd_skills = extract_skills_simple(jd_text)
+
+    matches = [s for s in jd_skills if s in resume_skills]
+    missing = list(set(jd_skills) - set(resume_skills))
+
+    if not jd_skills:
+        return 0, [], []
+
+    score = len(matches) / len(jd_skills) * 100
+    return round(score, 2), matches, missing
+
+
+def experience_score(resume_text, jd_text):
+    resume_years = re.findall(r"(\d+)\+?\s*years", resume_text.lower())
+    jd_years = re.findall(r"(\d+)\+?\s*years", jd_text.lower())
+
+    if not resume_years or not jd_years:
+        return 50
+
+    resume_exp = max(map(int, resume_years))
+    required_exp = max(map(int, jd_years))
+
+    score = min(100, (resume_exp / required_exp) * 100)
+    return round(score, 2)
+
+
+# --------------------------------------------------------------------
+# ROUTES
+# --------------------------------------------------------------------
+
+@app.get("/", response_class=HTMLResponse)
+def username_page(request: Request):
+    return templates.TemplateResponse("username.html", {"request": request})
+
+
+@app.get("/chatpage", response_class=HTMLResponse)
+def chat_page(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
 
 @app.post("/save-username")
 async def save_username(request: Request, username: str = Form(...)):
@@ -161,28 +267,22 @@ async def save_username(request: Request, username: str = Form(...)):
     try:
         user = db.query(ChatUser).filter(ChatUser.username == username).first()
         if not user:
-            user = ChatUser(username=username)
-            db.add(user)
+            db.add(ChatUser(username=username))
             db.commit()
-        # Fetch previous chat history
-        messages = db.query(ChatMessage).filter(ChatMessage.username == username).order_by(ChatMessage.created_at.asc()).all()
-        chat_history = [{"message": m.message, "is_bot": m.is_bot} for m in messages]
+
+        # Return chat history
+        messages = db.query(ChatMessage).filter(
+            ChatMessage.username == username
+        ).order_by(ChatMessage.created_at.asc()).all()
+
+        chat_history = [
+            {"message": m.message, "is_bot": m.is_bot} for m in messages
+        ]
+
         return {"success": True, "chat_history": chat_history}
+
     finally:
         db.close()
-@app.get("/lander", response_class=HTMLResponse)
-def username_page(request: Request):
-    # Landing page with username form
-    return templates.TemplateResponse("username.html", {"request": request})
-
-@app.get("/", response_class=HTMLResponse)
-def username_page(request: Request):
-    # Landing page with username form
-    return templates.TemplateResponse("username.html", {"request": request})
-
-@app.get("/chatpage", response_class=HTMLResponse)
-def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.post("/chat")
@@ -209,98 +309,23 @@ async def chat(message: str = Form(...), username: str = Form(...)):
     finally:
         db.close()
 
-def extract_text_from_pdf(file_bytes):
-    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-        text = ""
-        for page in pdf.pages:
-            extracted = page.extract_text()
-            if extracted:
-                text += extracted + "\n"
-    return text
 
-
-def clean_words(text):
-    return re.findall(r"\b[a-zA-Z0-9+#.]+\b", text.lower())
-
-
-def extract_skills(text):
-    doc = nlp(text)
-    print("Extracting skills from text...",doc)
-    skills = [token.text.lower() for token in doc if token.pos_ in ["NOUN", "PROPN"]]
-    print("Raw skills extracted:", skills)
-    return list(set(skills))
-
-
-# ------------------------------
-# Scoring Algorithms
-# ------------------------------
-
-def keyword_score(resume_text, jd_text):
-    resume_words = set(clean_words(resume_text))
-    jd_words = clean_words(jd_text)
-
-    matches = [w for w in jd_words if w in resume_words]
-    missing = list(set(jd_words) - resume_words)
-
-    score = (len(matches) / len(jd_words)) * 100 if jd_words else 0
-    return round(score, 2), missing
-
-
-def semantic_score(resume_text, jd_text):
-    try:
-        emb_resume = model.encode(resume_text[:2000], convert_to_tensor=True)
-        emb_jd = model.encode(jd_text[:2000], convert_to_tensor=True)
-
-        similarity = util.cos_sim(emb_resume, emb_jd).item()
-        return round(similarity * 100, 2)
-    except Exception as e:
-        print("Semantic error:", e)
-        return 50.0
-
-
-def skill_score(resume_text, jd_text):
-    resume_skills = extract_skills(resume_text)
-    jd_skills = extract_skills(jd_text)
-
-    matches = [s for s in jd_skills if s in resume_skills]
-    missing = list(set(jd_skills) - set(resume_skills))
-
-    if len(jd_skills) == 0:
-        return 0, [], []
-
-    score = len(matches) / len(jd_skills) * 100
-    return round(score, 2), matches, missing
-
-
-def experience_score(resume_text, jd_text):
-    resume_years = re.findall(r"(\d+)\+?\s*years", resume_text.lower())
-    jd_years = re.findall(r"(\d+)\+?\s*years", jd_text.lower())
-
-    if not resume_years or not jd_years:
-        return 50  # neutral score
-
-    resume_exp = max(map(int, resume_years))
-    required_exp = max(map(int, jd_years))
-
-    score = min(100, (resume_exp / required_exp) * 100)
-    return round(score, 2)
+# --------------------------------------------------------------------
+# RESUME SCORING API (LIGHTWEIGHT VERSION)
+# --------------------------------------------------------------------
 
 @app.post("/resume-score")
 async def resume_score_api(
     resume: UploadFile = File(...),
     job_description: str = Form(...)
 ):
-    # Extract text from uploaded PDF
-    resume_bytes = await resume.read()
-    resume_text = extract_text_from_pdf(resume_bytes)
+    resume_text = extract_pdf_text(resume)
 
-    # Compute all scores
     k_score, missing_keywords = keyword_score(resume_text, job_description)
     s_score = semantic_score(resume_text, job_description)
     skillscore, matched_skills, missing_skills = skill_score(resume_text, job_description)
     exp_score = experience_score(resume_text, job_description)
 
-    # Weighted score
     final_score = round(
         k_score * 0.30 +
         s_score * 0.40 +
@@ -319,3 +344,4 @@ async def resume_score_api(
         "missing_skills": missing_skills[:20],
         "missing_keywords": missing_keywords[:20]
     }
+
