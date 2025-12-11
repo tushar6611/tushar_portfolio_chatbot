@@ -42,6 +42,32 @@
     .badge-py {
         @apply inline-block px-4 py-1 bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 rounded-full text-sm font-medium;
     }
+
+    /* FIXED: Skills cards now wrap long text properly on mobile */
+    .skill-card {
+        @apply glass-card py-6 px-4 rounded-xl glow-py card-hover border border-yellow-500/20;
+        min-height: 90px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        word-break: break-word;
+        hyphens: auto;
+    }
+    .skill-card > div {
+        @apply text-lg md:text-xl font-bold text-yellow-300 leading-tight;
+    }
+
+    /* Extra small screens: tighter grid */
+    @media (max-width: 480px) {
+        .skill-card {
+            padding: 1rem 0.75rem;
+            min-height: 80px;
+        }
+        .skill-card > div {
+            font-size: 0.95rem !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -84,7 +110,6 @@
             </div>
 
             <div class="mt-8 flex flex-wrap gap-4">
-                <!-- DOWNLOAD RESUME IN NEW TAB + DOWNLOAD ATTRIBUTE -->
                 <a href="https://1drv.ms/b/c/5bc38c510559f1a0/IQCg8VkFUYzDIIBbTwgAAAAAAUr9zp9_AmA6ExTZPf6Fq0I?e=pnhFwI" 
                    class="btn-python" 
                    target="_blank" 
@@ -112,9 +137,6 @@
                 <a href="#skills" class="px-8 py-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg hover:bg-yellow-500/20 transition backdrop-blur">
                     Explore Skills
                 </a>
-                <!-- <a href="#projects" class="px-8 py-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg hover:bg-yellow-500/20 transition backdrop-blur">
-                    View Projects
-                </a> -->
             </div>
         </div>
     </div>
@@ -180,11 +202,11 @@
     </div>
 </section>
 
-<!-- SKILLS – Your Real Stack -->
+<!-- SKILLS – FIXED FOR MOBILE -->
 <section id="skills" class="py-20 px-6">
     <div class="max-w-6xl mx-auto text-center">
         <h2 class="section-title">Core Expertise</h2>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mt-12">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 mt-12 px-4 md:px-0">
             {% set skills = [
                 "Python", ".NET Core", "C#", "Microservices", "React",
                 "Next.js", "FastAPI", "TensorFlow", "PyTorch", "Scikit-learn",
@@ -193,8 +215,8 @@
                 "REST APIs", "Predictive Analytics", "Data Structures", "Agile", "Matplotlib"
             ] %}
             {% for skill in skills %}
-            <div class="glass-card py-6 px-8 rounded-xl glow-py card-hover border border-yellow-500/20">
-                <div class="text-xl font-bold text-yellow-300">{{ skill }}</div>
+            <div class="skill-card">
+                <div>{{ skill }}</div>
             </div>
             {% endfor %}
         </div>
