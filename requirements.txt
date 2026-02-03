@@ -29,3 +29,5 @@ loguru>=0.7.2
 
 # For development / debugging
 httpx>=0.27.0
+Flask==2.3.3
+gunicorn
