@@ -1,0 +1,25 @@
+# Netlify = static React app from frontend/dist only. Python/FastAPI/Postgres do not run here.
+# “One URL” for users: uncomment the /api proxy and host the API elsewhere (Render, Fly, etc.).
+# Or set VITE_API_BASE_URL at build time to your API’s full origin and configure CORS on the API.
+
+[build]
+  command = "cd frontend && npm ci && npm run build"
+  publish = "frontend/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Order matters: first match wins. Put API proxy above the SPA fallback.
+
+# Uncomment and set your API host (same-origin /api in the browser; still a second deploy).
+# [[redirects]]
+#   from = "/api/*"
+#   to = "https://your-api.onrender.com/api/:splat"
+#   status = 200
+#   force = true
+
+# React Router: real files (e.g. /assets/*) are served first; everything else → index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

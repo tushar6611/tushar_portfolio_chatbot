@@ -6,17 +6,14 @@ import difflib
 from io import BytesIO
 from datetime import datetime
 from difflib import SequenceMatcher
+from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, Form, Request
-from fastapi.responses import (
-    HTMLResponse,
-    JSONResponse,
-    StreamingResponse
-)
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-
+from pydantic import BaseModel, Field
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from PyPDF2 import PdfReader
+from sqlalchemy.exc import SQLAlchemyError
 
 # Internal imports
 from common.appLogger import AppLogger
@@ -29,11 +26,19 @@ from tushar.one_drive_resume_handler import generate_resume_download_link
 # INIT
 # -------------------------------------------------
 
-init_db()
+app = FastAPI(title="Tushar Portfolio API")
 
-app = FastAPI()
-app.mount("/static", StaticFiles(directory="static", html=True), name="static")
-templates = Jinja2Templates(directory="templates")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if o.strip()],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+FRONTEND_DIST = Path(__file__).resolve().parent / "frontend" / "dist"
+if (FRONTEND_DIST / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="spa_assets")
 
 logger = AppLogger({
     "name": "portfolio_bot",
@@ -41,6 +46,8 @@ logger = AppLogger({
     "log_level": "INFO",
     "log_to_stdout": True
 })
+
+init_db(logger)
 
 RESUME_TEXT = load_resume_text()
 
@@ -183,26 +190,20 @@ def sse_event(progress, message):
 
 
 # -------------------------------------------------
-# ROUTES
+# API MODELS & HANDLERS
 # -------------------------------------------------
 
-@app.get("/", response_class=HTMLResponse)
-async def welcome_page(request: Request):
-    return templates.TemplateResponse("username.html", {"request": request})
+
+class UsernamePayload(BaseModel):
+    username: str = Field(..., min_length=1, max_length=512)
 
 
-@app.get("/home", response_class=HTMLResponse)
-async def home_page(request: Request):
-    return templates.TemplateResponse("home.html", {"request": request})
+class ChatPayload(BaseModel):
+    username: str = Field(..., min_length=1, max_length=512)
+    message: str = Field(..., min_length=1, max_length=8000)
 
 
-@app.get("/chatpage", response_class=HTMLResponse)
-async def chat_page(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-
-@app.post("/save-username")
-async def save_username(username: str = Form(...)):
+def save_username_result(username: str) -> dict:
     db = SessionLocal()
     try:
         if not db.query(ChatUser).filter(ChatUser.username == username).first():
@@ -221,62 +222,169 @@ async def save_username(username: str = Form(...)):
             "chat_history": [
                 {"message": m.message, "is_bot": m.is_bot}
                 for m in messages
-            ]
+            ],
         }
+    except SQLAlchemyError as exc:
+        logger.warning(f"Database unavailable for session/username; returning empty history: {exc}")
+        db.rollback()
+        return {"success": True, "chat_history": []}
     finally:
         db.close()
+
+
+def chat_result(username: str, message: str) -> dict:
+    text = message.lower().strip()
+
+    if "resume" in text or "cv" in text:
+        response = generate_resume_download_link()
+    else:
+        match = difflib.get_close_matches(text, PREDEFINED_ANSWERS.keys(), 1, 0.5)
+        response = (
+            PREDEFINED_ANSWERS.get(match[0], "Sorry, I didn’t understand.")
+            if match
+            else "Sorry, I didn’t understand."
+        )
+
+    db = SessionLocal()
+    try:
+        db.add(ChatMessage(username=username, message=message, is_bot=False))
+        db.commit()
+        db.add(ChatMessage(username=username, message=response, is_bot=True))
+        db.commit()
+    except SQLAlchemyError as exc:
+        logger.warning(f"Database unavailable for chat; reply still returned: {exc}")
+        db.rollback()
+    finally:
+        db.close()
+
+    return {"response": response}
+
+
+async def resume_analysis_stream(pdf_bytes: bytes, job_description: str):
+    resume_text = extract_pdf_text_from_bytes(pdf_bytes)
+
+    yield sse_event(10, "Reading resume...")
+    yield sse_event(30, "Extracted text")
+
+    matched, missing = match_skills_fuzzy(resume_text, job_description)
+    yield sse_event(60, "Matching skills")
+
+    skill_score_val = calculate_fuzzy_score(matched, missing)
+    exp_score = experience_score(resume_text, job_description)
+
+    final_score = round(skill_score_val * 0.7 + exp_score * 0.3, 2)
+
+    yield f"data: {json.dumps({
+        'progress': 100,
+        'final_score': final_score,
+        'skill_score': skill_score_val,
+        'experience_score': exp_score,
+        'matched_skills': matched[:50],
+        'missing_skills': missing[:50]
+    })}\n\n"
+
+
+# -------------------------------------------------
+# ROUTES
+# -------------------------------------------------
+
+
+@app.get("/api/health")
+async def health():
+    return {"status": "ok"}
+
+
+@app.post("/api/session/username")
+async def api_save_username(body: UsernamePayload):
+    return save_username_result(body.username)
+
+
+@app.post("/api/chat")
+async def api_chat(body: ChatPayload):
+    return chat_result(body.username, body.message)
+
+
+@app.post("/api/resume/analyze")
+async def api_resume_analyze(
+    file: UploadFile = File(...),
+    job_description: str = Form(...),
+):
+    pdf_bytes = await file.read()
+
+    async def stream():
+        async for chunk in resume_analysis_stream(pdf_bytes, job_description):
+            yield chunk
+
+    return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+@app.post("/save-username")
+async def save_username(username: str = Form(...)):
+    return save_username_result(username)
 
 
 @app.post("/chat")
 async def chat(message: str = Form(...), username: str = Form(...)):
-    db = SessionLocal()
-    text = message.lower().strip()
-
-    try:
-        db.add(ChatMessage(username=username, message=message, is_bot=False))
-        db.commit()
-
-        if "resume" in text or "cv" in text:
-            response = generate_resume_download_link()
-        else:
-            match = difflib.get_close_matches(text, PREDEFINED_ANSWERS.keys(), 1, 0.5)
-            response = PREDEFINED_ANSWERS.get(match[0], "Sorry, I didn’t understand.") if match else "Sorry, I didn’t understand."
-
-        db.add(ChatMessage(username=username, message=response, is_bot=True))
-        db.commit()
-
-        return {"response": response}
-    finally:
-        db.close()
+    return chat_result(username, message)
 
 
 @app.post("/resume-progress")
 async def resume_progress(
     file: UploadFile = File(...),
-    job_description: str = Form(...)
+    job_description: str = Form(...),
 ):
     pdf_bytes = await file.read()
-    resume_text = extract_pdf_text_from_bytes(pdf_bytes)
 
     async def stream():
-        yield sse_event(10, "Reading resume...")
-        yield sse_event(30, "Extracted text")
-
-        matched, missing = match_skills_fuzzy(resume_text, job_description)
-        yield sse_event(60, "Matching skills")
-
-        skill_score = calculate_fuzzy_score(matched, missing)
-        exp_score = experience_score(resume_text, job_description)
-
-        final_score = round(skill_score * 0.7 + exp_score * 0.3, 2)
-
-        yield f"data: {json.dumps({
-            'progress': 100,
-            'final_score': final_score,
-            'skill_score': skill_score,
-            'experience_score': exp_score,
-            'matched_skills': matched[:50],
-            'missing_skills': missing[:50]
-        })}\n\n"
+        async for chunk in resume_analysis_stream(pdf_bytes, job_description):
+            yield chunk
 
     return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+@app.get("/chatpage", include_in_schema=False)
+async def legacy_chatpage():
+    return RedirectResponse(url="/chat", status_code=308)
+
+
+def _spa_index():
+    index = FRONTEND_DIST / "index.html"
+    if not index.is_file():
+        raise HTTPException(
+            status_code=503,
+            detail="Frontend bundle missing. Build with: cd frontend && npm ci && npm run build",
+        )
+    return FileResponse(index)
+
+
+@app.get("/", include_in_schema=False)
+async def spa_root():
+    return _spa_index()
+
+
+@app.get("/home", include_in_schema=False)
+async def spa_home():
+    return _spa_index()
+
+
+@app.get("/chat", include_in_schema=False)
+async def spa_chat():
+    return _spa_index()
+
+
+@app.get("/{resource:path}", include_in_schema=False)
+async def spa_static_or_fallback(resource: str):
+    if resource.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    candidate = (FRONTEND_DIST / resource).resolve()
+    dist_resolved = FRONTEND_DIST.resolve()
+    try:
+        candidate.relative_to(dist_resolved)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Not Found") from None
+
+    if candidate.is_file():
+        return FileResponse(candidate)
+
+    return _spa_index()

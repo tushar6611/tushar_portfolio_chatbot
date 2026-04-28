@@ -11,7 +11,8 @@ DATABASE_URL = os.getenv(
 Base = declarative_base()
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"sslmode": "require"}  # Very important for Supabase
+    connect_args={"sslmode": "require"},
+    pool_pre_ping=True,
 )
 SessionLocal = sessionmaker(bind=engine)
 
@@ -29,5 +30,25 @@ class ChatMessage(Base):
     is_bot = Column(Boolean, default=True)
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
-def init_db():
-    Base.metadata.create_all(bind=engine)
+
+def init_db(log=None):
+    """
+    Ensure tables exist. Does not stop the app if the database is unreachable;
+    chat routes will skip persistence until the database is available again.
+    """
+    try:
+        Base.metadata.create_all(bind=engine)
+        if log:
+            log.info("Database reachable; schema ensured.")
+    except Exception as exc:
+        if log:
+            log.warning(
+                "Database unavailable at startup; serving traffic without persistence "
+                f"until the database is reachable again: {exc}"
+            )
+        else:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "Database unavailable at startup; persistence disabled: %s", exc
+            )

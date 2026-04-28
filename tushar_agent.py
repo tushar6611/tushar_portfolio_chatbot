@@ -4,7 +4,7 @@ import os
 import sys
 from tushar.common_tushar_funcs import get_resume_file_id, chatwith_tushar_agent, create_conversation
 from tushar.prompt_tushar_agent import prompt_tushar_agent
-from tushar.sharepoint_resume_handler import generate_resume_download_link
+from tushar.one_drive_resume_handler import generate_resume_download_link
 from common.appLogger import AppLogger
 from common.secrets_env import load_secrets_env_variables
 

@@ -1,0 +1,9 @@
+{
+  "name": "tushar-portfolio-chatbot",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix frontend ci && npm --prefix frontend run build",
+    "dev:web": "npm --prefix frontend run dev",
+    "dev:api": "uvicorn main:app --reload --host 127.0.0.1 --port 8000"
+  }
+}
